@@ -46,7 +46,7 @@ const mdEofCode = 1
 const mdErrCode = 2
 const mdMaxDepth = 200
 
-//line ./parser/md/parser.go.y:144
+//line ./parser/md/parser.go.y:135
 
 //line yacctab:1
 var mdExca = []int{
@@ -55,56 +55,56 @@ var mdExca = []int{
 	-2, 0,
 }
 
-const mdNprod = 22
+const mdNprod = 21
 const mdPrivate = 57344
 
 var mdTokenNames []string
 var mdStates []string
 
-const mdLast = 59
+const mdLast = 58
 
 var mdAct = []int{
 
-	11, 12, 13, 14, 15, 16, 17, 18, 19, 24,
-	20, 3, 2, 28, 7, 11, 12, 13, 14, 15,
-	16, 17, 18, 19, 5, 20, 1, 21, 11, 12,
-	13, 14, 15, 16, 17, 18, 19, 6, 20, 25,
-	10, 9, 23, 8, 22, 4, 27, 0, 0, 0,
-	0, 0, 0, 0, 0, 0, 0, 0, 26,
+	10, 11, 12, 13, 14, 15, 16, 17, 18, 23,
+	19, 26, 2, 1, 22, 10, 11, 12, 13, 14,
+	15, 16, 17, 18, 24, 19, 9, 4, 10, 11,
+	12, 13, 14, 15, 16, 17, 18, 6, 19, 8,
+	7, 20, 21, 5, 3, 0, 0, 0, 0, 0,
+	0, 0, 0, 0, 0, 0, 0, 25,
 }
 var mdPact = []int{
 
-	-3, -1000, -5, -4, 11, -1000, -1000, -1000, -1000, -1000,
-	-1000, -1000, -1000, -1000, -1000, -1000, -1000, -1000, -1000, -8,
-	24, -4, -1000, -1000, 0, -1000, -1000, -1000, -1000,
+	-3, -1000, -1000, 11, -4, -1000, -1000, -1000, -1000, -1000,
+	-1000, -1000, -1000, -1000, -1000, -1000, -1000, -1000, -8, 24,
+	-1000, -1000, -1000, -2, -1000, -1000, -1000,
 }
 var mdPgo = []int{
 
-	0, 45, 44, 24, 37, 43, 41, 40, 39, 26,
+	0, 44, 43, 41, 37, 40, 39, 26, 24, 13,
 }
 var mdR1 = []int{
 
-	0, 9, 9, 1, 1, 2, 3, 3, 4, 4,
-	4, 5, 5, 5, 5, 5, 5, 5, 5, 6,
-	7, 8,
+	0, 9, 1, 1, 2, 3, 3, 4, 4, 4,
+	5, 5, 5, 5, 5, 5, 5, 5, 6, 7,
+	8,
 }
 var mdR2 = []int{
 
-	0, 3, 4, 0, 2, 1, 1, 1, 1, 1,
-	1, 1, 1, 1, 1, 1, 1, 1, 1, 3,
-	2, 1,
+	0, 4, 0, 2, 1, 1, 1, 1, 1, 1,
+	1, 1, 1, 1, 1, 1, 1, 1, 3, 2,
+	1,
 }
 var mdChk = []int{
 
-	-1000, -9, 15, 16, -1, -3, -4, 18, -5, -6,
-	-7, 4, 5, 6, 7, 8, 9, 10, 11, 12,
-	14, 16, -2, -4, 17, -8, -4, -3, 13,
+	-1000, -9, 15, -1, 16, -2, -4, -5, -6, -7,
+	4, 5, 6, 7, 8, 9, 10, 11, 12, 14,
+	-3, -4, 18, 17, -8, -4, 13,
 }
 var mdDef = []int{
 
-	0, -2, 3, 0, 0, 1, 6, 7, 8, 9,
-	10, 11, 12, 13, 14, 15, 16, 17, 18, 0,
-	0, 0, 4, 5, 0, 20, 21, 2, 19,
+	0, -2, 2, 0, 0, 3, 4, 7, 8, 9,
+	10, 11, 12, 13, 14, 15, 16, 17, 0, 0,
+	1, 5, 6, 0, 19, 20, 18,
 }
 var mdTok1 = []int{
 
@@ -358,92 +358,82 @@ mddefault:
 			if l, ok := mdlex.(*MDLexer); ok {
 				l.Result = &MDInfo{
 					ReturnType:     mdS[mdpt-0].jtype,
-					ParameterTypes: make([]*fd.FDInfo, 0),
-				}
-			}
-		}
-	case 2:
-		//line ./parser/md/parser.go.y:46
-		{
-			if l, ok := mdlex.(*MDLexer); ok {
-				l.Result = &MDInfo{
-					ReturnType:     mdS[mdpt-0].jtype,
 					ParameterTypes: mdS[mdpt-2].params,
 				}
 			}
 		}
-	case 3:
-		//line ./parser/md/parser.go.y:58
+	case 2:
+		//line ./parser/md/parser.go.y:49
 		{
 			mdVAL.params = make([]*fd.FDInfo, 0)
 		}
-	case 4:
-		//line ./parser/md/parser.go.y:62
+	case 3:
+		//line ./parser/md/parser.go.y:53
 		{
 			mdVAL.params = append(mdS[mdpt-1].params, mdS[mdpt-0].jtype)
 		}
+	case 4:
+		mdVAL.jtype = mdS[mdpt-0].jtype
 	case 5:
 		mdVAL.jtype = mdS[mdpt-0].jtype
 	case 6:
-		mdVAL.jtype = mdS[mdpt-0].jtype
-	case 7:
-		//line ./parser/md/parser.go.y:74
+		//line ./parser/md/parser.go.y:65
 		{
 			mdVAL.jtype = fd.NewPrimitiveType("void")
 		}
+	case 7:
+		mdVAL.jtype = mdS[mdpt-0].jtype
 	case 8:
 		mdVAL.jtype = mdS[mdpt-0].jtype
 	case 9:
 		mdVAL.jtype = mdS[mdpt-0].jtype
 	case 10:
-		mdVAL.jtype = mdS[mdpt-0].jtype
-	case 11:
-		//line ./parser/md/parser.go.y:87
+		//line ./parser/md/parser.go.y:78
 		{
 			mdVAL.jtype = fd.NewPrimitiveType("byte")
 		}
-	case 12:
-		//line ./parser/md/parser.go.y:91
+	case 11:
+		//line ./parser/md/parser.go.y:82
 		{
 			mdVAL.jtype = fd.NewPrimitiveType("char")
 		}
-	case 13:
-		//line ./parser/md/parser.go.y:95
+	case 12:
+		//line ./parser/md/parser.go.y:86
 		{
 			mdVAL.jtype = fd.NewPrimitiveType("double")
 		}
-	case 14:
-		//line ./parser/md/parser.go.y:99
+	case 13:
+		//line ./parser/md/parser.go.y:90
 		{
 			mdVAL.jtype = fd.NewPrimitiveType("float")
 		}
-	case 15:
-		//line ./parser/md/parser.go.y:103
+	case 14:
+		//line ./parser/md/parser.go.y:94
 		{
 			mdVAL.jtype = fd.NewPrimitiveType("int")
 		}
-	case 16:
-		//line ./parser/md/parser.go.y:107
+	case 15:
+		//line ./parser/md/parser.go.y:98
 		{
 			mdVAL.jtype = fd.NewPrimitiveType("long")
 		}
-	case 17:
-		//line ./parser/md/parser.go.y:111
+	case 16:
+		//line ./parser/md/parser.go.y:102
 		{
 			mdVAL.jtype = fd.NewPrimitiveType("short")
 		}
-	case 18:
-		//line ./parser/md/parser.go.y:115
+	case 17:
+		//line ./parser/md/parser.go.y:106
 		{
 			mdVAL.jtype = fd.NewPrimitiveType("boolean")
 		}
-	case 19:
-		//line ./parser/md/parser.go.y:122
+	case 18:
+		//line ./parser/md/parser.go.y:113
 		{
 			mdVAL.jtype = fd.NewReferenceType(mdS[mdpt-1].token.Text)
 		}
-	case 20:
-		//line ./parser/md/parser.go.y:129
+	case 19:
+		//line ./parser/md/parser.go.y:120
 		{
 			if mdS[mdpt-0].jtype.PrimitiveType || mdS[mdpt-0].jtype.ReferenceType {
 				mdVAL.jtype = fd.NewArrayType(mdS[mdpt-0].jtype, 1)
@@ -453,7 +443,7 @@ mddefault:
 				panic("??? Siranai Kata da")
 			}
 		}
-	case 21:
+	case 20:
 		mdVAL.jtype = mdS[mdpt-0].jtype
 	}
 	goto mdstack /* stack new state and value */
