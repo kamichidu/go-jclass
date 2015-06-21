@@ -533,7 +533,7 @@ func (self *JClass) GetMethods() []*JMethod {
 func (self *JClass) GetAttributes() []*JAttribute {
 	attributes := make([]*JAttribute, self.data.AttributesCount)
 	for i := uint16(0); i < self.data.AttributesCount; i++ {
-		attributes[i] = newJAttributeWithJClass(self, &self.data.Attributes[i])
+		attributes[i] = newJAttribute(self.data.ConstantPool, &self.data.Attributes[i])
 	}
 	return attributes
 }

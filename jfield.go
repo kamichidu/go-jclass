@@ -41,7 +41,7 @@ func (self *JField) GetType() JType {
 func (self *JField) GetAttributes() []*JAttribute {
 	attributes := make([]*JAttribute, self.data.AttributesCount)
 	for i := uint16(0); i < self.data.AttributesCount; i++ {
-		attributes[i] = newJAttributeWithJField(self.enclosing, self, &self.data.Attributes[i])
+		attributes[i] = newJAttribute(self.enclosing.data.ConstantPool, &self.data.Attributes[i])
 	}
 	return attributes
 }

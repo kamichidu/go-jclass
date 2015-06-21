@@ -52,7 +52,7 @@ func (self *JMethod) GetReturnType() JType {
 func (self *JMethod) GetAttributes() []*JAttribute {
 	attributes := make([]*JAttribute, self.data.AttributesCount)
 	for i := uint16(0); i < self.data.AttributesCount; i++ {
-		attributes[i] = newJAttributeWithJMethod(self.enclosing, self, &self.data.Attributes[i])
+		attributes[i] = newJAttribute(self.enclosing.data.ConstantPool, &self.data.Attributes[i])
 	}
 	return attributes
 }
