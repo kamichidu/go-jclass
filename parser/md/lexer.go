@@ -29,7 +29,7 @@ func (self *MDLexer) Lex(lval *mdSymType) int {
 	pos := self.Pos
 	self.Pos++
 	switch c {
-	case 'B', 'C', 'D', 'F', 'I', 'J', 'S', 'Z', 'L', ';', '[', '(', ')':
+	case 'B', 'C', 'D', 'F', 'I', 'J', 'S', 'Z', 'L', ';', '[', '(', ')', 'V':
 		lval.token = MDToken{
 			Id:   int(c),
 			Text: string(c),
@@ -57,8 +57,12 @@ func (self *MDLexer) Lex(lval *mdSymType) int {
 }
 
 func (self *MDLexer) Error(s string) {
-	desc := fmt.Sprintf("%v at %c (column %d)", s, self.Text[self.Pos], self.Pos)
-	self.Errors = append(self.Errors, desc)
+	if self.Pos < self.Length {
+		desc := fmt.Sprintf("%v at %c (column %d)", s, self.Text[self.Pos], self.Pos)
+		self.Errors = append(self.Errors, desc)
+	} else {
+		self.Errors = append(self.Errors, "Unexpected EOF")
+	}
 }
 
 func Parse(descriptor string) (*MDInfo, error) {

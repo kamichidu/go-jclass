@@ -33,7 +33,16 @@ type MDToken struct {
 %%
 
 MethodDescriptor
-    : '(' ParameterDescriptors ')' ReturnDescriptor
+    : '(' ')' ReturnDescriptor
+        {
+            if l, ok := mdlex.(*MDLexer); ok {
+                l.Result = &MDInfo{
+                    ReturnType:     $3,
+                    ParameterTypes: make([]*fd.FDInfo, 0),
+                }
+            }
+        }
+    | '(' ParameterDescriptors ')' ReturnDescriptor
         {
             if l, ok := mdlex.(*MDLexer); ok {
                 l.Result = &MDInfo{

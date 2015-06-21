@@ -7,6 +7,11 @@ import (
 	"testing"
 )
 
+func pp(val interface{}) string {
+    v := reflect.ValueOf(val)
+    return v.String()
+}
+
 func p(typeName string) *fdparser.FDInfo {
 	return &fdparser.FDInfo{
 		TypeName:      typeName,
@@ -41,13 +46,15 @@ func TestParseMethodDescriptor(t *testing.T) {
 		t.Logf("Try to parse '%s'", md)
 		if ret, err := mdparser.Parse(md); err == nil {
 			if !reflect.DeepEqual(ret, expect) {
-				t.Errorf("Expected %#v", expect)
-				t.Errorf("Got      %#v", ret)
+                t.Errorf("Expected %s", pp(expect))
+                t.Errorf("Got      %s", pp(ret))
 			}
+            t.Log(" -> OK")
 		} else {
-			t.Errorf("error: %v", err)
+			t.Errorf("  ERR: %v", err)
 		}
 	}
 
+	ok("()V", m(p("void"), []*fdparser.FDInfo{}))
 	ok("(IDLjava/lang/Thread;)Ljava/lang/Object;", m(r("java/lang/Object"), []*fdparser.FDInfo{p("int"), p("double"), r("java/lang/Thread")}))
 }
