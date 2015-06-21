@@ -544,11 +544,7 @@ func (self *JClass) GetMethods() []*JMethod {
 }
 
 func (self *JClass) GetAttributes() []data.AttributeInfo {
-	attributes := make([]data.AttributeInfo, self.data.AttributesCount)
-	for i := uint16(0); i < self.data.AttributesCount; i++ {
-		attributes[i] = self.data.Attributes[i]
-	}
-	return attributes
+	return self.data.Attributes
 }
 
 func (self *JClass) GetAttribute(typ reflect.Type) data.AttributeInfo {

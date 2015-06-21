@@ -49,10 +49,6 @@ func (self *JMethod) GetReturnType() JType {
 	return newJType(ret.ReturnType)
 }
 
-func (self *JMethod) GetAttributes() []*JAttribute {
-	attributes := make([]*JAttribute, self.data.AttributesCount)
-	for i := uint16(0); i < self.data.AttributesCount; i++ {
-		attributes[i] = newJAttribute(self.enclosing.data.ConstantPool, &self.data.Attributes[i])
-	}
-	return attributes
+func (self *JMethod) GetAttributes() []data.AttributeInfo {
+	return self.data.Attributes
 }
