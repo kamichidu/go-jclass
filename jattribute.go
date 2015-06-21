@@ -2,15 +2,16 @@ package jclass
 
 import (
 	"github.com/kamichidu/go-jclass/data"
+	"reflect"
 )
 
 type JAttribute struct {
 	jclass *JClass
 	rel    interface{}
-	data   *data.AttributeInfo
+	data   data.AttributeInfo
 }
 
-func newJAttributeWithJClass(jclass *JClass, data *data.AttributeInfo) *JAttribute {
+func newJAttributeWithJClass(jclass *JClass, data data.AttributeInfo) *JAttribute {
 	return &JAttribute{
 		jclass: jclass,
 		rel:    jclass,
@@ -18,7 +19,7 @@ func newJAttributeWithJClass(jclass *JClass, data *data.AttributeInfo) *JAttribu
 	}
 }
 
-func newJAttributeWithJField(jclass *JClass, rel *JField, data *data.AttributeInfo) *JAttribute {
+func newJAttributeWithJField(jclass *JClass, rel *JField, data data.AttributeInfo) *JAttribute {
 	return &JAttribute{
 		jclass: jclass,
 		rel:    rel,
@@ -26,7 +27,7 @@ func newJAttributeWithJField(jclass *JClass, rel *JField, data *data.AttributeIn
 	}
 }
 
-func newJAttributeWithJMethod(jclass *JClass, rel *JMethod, data *data.AttributeInfo) *JAttribute {
+func newJAttributeWithJMethod(jclass *JClass, rel *JMethod, data data.AttributeInfo) *JAttribute {
 	return &JAttribute{
 		jclass: jclass,
 		rel:    rel,
@@ -35,9 +36,7 @@ func newJAttributeWithJMethod(jclass *JClass, rel *JMethod, data *data.Attribute
 }
 
 func (self *JAttribute) GetName() string {
-	return self.jclass.getUtf8String(self.data.AttributeNameIndex)
-}
-
-func (self *JAttribute) GetInfo() []uint8 {
-	return self.data.Info
+	val := reflect.ValueOf(self.data).Elem().Elem().Elem()
+	nameIndex := uint16(val.FieldByName("AttributeNameIndex").Uint())
+	return getUtf8String(self.jclass.data.ConstantPool, nameIndex)
 }

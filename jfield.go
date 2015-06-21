@@ -22,11 +22,11 @@ func (self *JField) GetAccessFlags() uint16 {
 }
 
 func (self *JField) GetName() string {
-	return self.enclosing.getUtf8String(self.data.NameIndex)
+	return getUtf8String(self.enclosing.data.ConstantPool, self.data.NameIndex)
 }
 
 func (self *JField) GetDescriptor() string {
-	return self.enclosing.getUtf8String(self.data.DescriptorIndex)
+	return getUtf8String(self.enclosing.data.ConstantPool, self.data.DescriptorIndex)
 }
 
 func (self *JField) GetType() JType {

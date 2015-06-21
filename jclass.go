@@ -7,8 +7,23 @@ import (
 	"github.com/kamichidu/go-jclass/data"
 	"io"
 	"os"
-	"strings"
 )
+
+func getClassInfo(cp []data.CpInfo, index uint16) data.ClassInfo {
+	classInfo, ok := cp[index].(data.ClassInfo)
+	if !ok {
+		panic(fmt.Sprintf("given index (%d) indicates a invalid cp_info", index))
+	}
+	return classInfo
+}
+
+func getUtf8String(cp []data.CpInfo, index uint16) string {
+	utf8Info, ok := cp[index].(data.Utf8Info)
+	if !ok {
+		panic(fmt.Sprintf("given index (%d) indicates a invalid cp_info", index))
+	}
+	return string(utf8Info.Bytes)
+}
 
 func parseU1(in *bufio.Reader) (uint8, error) {
 	value, err := in.ReadByte()
@@ -194,7 +209,7 @@ func parseCpInfo(in *bufio.Reader) (data.CpInfo, error) {
 	return nil, errors.New(fmt.Sprintf("Illegal tag value detected: %d", tag))
 }
 
-func parseFieldInfo(in *bufio.Reader) (*data.FieldInfo, error) {
+func parseFieldInfo(cp []data.CpInfo, in *bufio.Reader) (*data.FieldInfo, error) {
 	var err error
 
 	fieldInfo := &data.FieldInfo{}
@@ -216,16 +231,16 @@ func parseFieldInfo(in *bufio.Reader) (*data.FieldInfo, error) {
 	}
 	fieldInfo.Attributes = make([]data.AttributeInfo, fieldInfo.AttributesCount)
 	for i := uint16(0); i < fieldInfo.AttributesCount; i++ {
-		attributeInfo, err := parseAttributeInfo(in)
+		attributeInfo, err := parseAttributeInfo(cp, in)
 		if err != nil {
 			return nil, err
 		}
-		fieldInfo.Attributes[i] = *attributeInfo
+		fieldInfo.Attributes[i] = attributeInfo
 	}
 	return fieldInfo, nil
 }
 
-func parseMethodInfo(in *bufio.Reader) (*data.MethodInfo, error) {
+func parseMethodInfo(cp []data.CpInfo, in *bufio.Reader) (*data.MethodInfo, error) {
 	var err error
 
 	methodInfo := &data.MethodInfo{}
@@ -247,39 +262,100 @@ func parseMethodInfo(in *bufio.Reader) (*data.MethodInfo, error) {
 	}
 	methodInfo.Attributes = make([]data.AttributeInfo, methodInfo.AttributesCount)
 	for i := uint16(0); i < methodInfo.AttributesCount; i++ {
-		attributeInfo, err := parseAttributeInfo(in)
+		attributeInfo, err := parseAttributeInfo(cp, in)
 		if err != nil {
 			return nil, err
 		}
-		methodInfo.Attributes[i] = *attributeInfo
+		methodInfo.Attributes[i] = attributeInfo
 	}
 	return methodInfo, nil
 }
 
-func parseAttributeInfo(in *bufio.Reader) (*data.AttributeInfo, error) {
+func parseAttributeInfo(cp []data.CpInfo, in *bufio.Reader) (data.AttributeInfo, error) {
 	var err error
 
-	attributeInfo := &data.AttributeInfo{}
+	nameIndex, err := parseU2(in)
 	if err != nil {
 		return nil, err
 	}
-	attributeInfo.AttributeNameIndex, err = parseU2(in)
+	length, err := parseU4(in)
 	if err != nil {
 		return nil, err
 	}
-	attributeInfo.AttributeLength, err = parseU4(in)
-	if err != nil {
-		return nil, err
-	}
-	attributeInfo.Info = make([]uint8, attributeInfo.AttributeLength)
-	for i := uint32(0); i < attributeInfo.AttributeLength; i++ {
-		b, err := parseU1(in)
+
+	name := getUtf8String(cp, nameIndex)
+	switch name {
+	case "ConstantValue":
+		attr := &data.ConstantValueAttribute{
+			AttributeNameIndex: nameIndex,
+			AttributeLength:    length,
+		}
+		attr.ConstantValueIndex, err = parseU2(in)
 		if err != nil {
 			return nil, err
 		}
-		attributeInfo.Info[i] = b
+		return attr, nil
+	case "InnerClasses":
+		attr := &data.InnerClassesAttribute{
+			AttributeNameIndex: nameIndex,
+			AttributeLength:    length,
+		}
+		attr.NumberOfClasses, err = parseU2(in)
+		if err != nil {
+			return nil, err
+		}
+		attr.Classes = make([]data.InnerClassAttribute, attr.NumberOfClasses)
+		for i := uint16(0); i < attr.NumberOfClasses; i++ {
+			c := data.InnerClassAttribute{}
+			c.InnerClassInfoIndex, err = parseU2(in)
+			if err != nil {
+				return nil, err
+			}
+			c.OuterClassInfoIndex, err = parseU2(in)
+			if err != nil {
+				return nil, err
+			}
+			c.InnerNameIndex, err = parseU2(in)
+			if err != nil {
+				return nil, err
+			}
+			c.InnerClassAccessFlags, err = parseU2(in)
+			if err != nil {
+				return nil, err
+			}
+			attr.Classes[i] = c
+		}
+		return attr, nil
+	case "Signature":
+		attr := &data.SignatureAttribute{
+			AttributeNameIndex: nameIndex,
+			AttributeLength:    length,
+		}
+		attr.SignatureIndex, err = parseU2(in)
+		if err != nil {
+			return nil, err
+		}
+		return attr, nil
+	case "Deprecated":
+		return &data.DeprecatedAttribute{
+			AttributeNameIndex: nameIndex,
+			AttributeLength:    length,
+		}, nil
+	default:
+		info := make([]uint8, length)
+		for i := uint32(0); i < length; i++ {
+			b, err := parseU1(in)
+			if err != nil {
+				return nil, err
+			}
+			info[i] = b
+		}
+		return &data.GeneralAttributeInfo{
+			AttributeNameIndex: nameIndex,
+			AttributeLength:    length,
+			Info:               info,
+		}, nil
 	}
-	return attributeInfo, nil
 }
 
 func parseClassFile(in *bufio.Reader) (*data.ClassFile, error) {
@@ -350,7 +426,7 @@ func parseClassFile(in *bufio.Reader) (*data.ClassFile, error) {
 	}
 	classFile.Fields = make([]data.FieldInfo, classFile.FieldsCount)
 	for i := uint16(0); i < classFile.FieldsCount; i++ {
-		fieldInfo, err := parseFieldInfo(in)
+		fieldInfo, err := parseFieldInfo(classFile.ConstantPool, in)
 		if err != nil {
 			return nil, err
 		}
@@ -362,7 +438,7 @@ func parseClassFile(in *bufio.Reader) (*data.ClassFile, error) {
 	}
 	classFile.Methods = make([]data.MethodInfo, classFile.MethodsCount)
 	for i := uint16(0); i < classFile.MethodsCount; i++ {
-		methodInfo, err := parseMethodInfo(in)
+		methodInfo, err := parseMethodInfo(classFile.ConstantPool, in)
 		if err != nil {
 			return nil, err
 		}
@@ -374,11 +450,11 @@ func parseClassFile(in *bufio.Reader) (*data.ClassFile, error) {
 	}
 	classFile.Attributes = make([]data.AttributeInfo, classFile.AttributesCount)
 	for i := uint16(0); i < classFile.AttributesCount; i++ {
-		attributeInfo, err := parseAttributeInfo(in)
+		attributeInfo, err := parseAttributeInfo(classFile.ConstantPool, in)
 		if err != nil {
 			return nil, err
 		}
-		classFile.Attributes[i] = *attributeInfo
+		classFile.Attributes[i] = attributeInfo
 	}
 
 	return classFile, nil
@@ -415,53 +491,25 @@ func NewJClassWithFilename(filename string) (*JClass, error) {
 	return NewJClass(file)
 }
 
-func (self *JClass) getClassInfo(index uint16) data.ClassInfo {
-	classInfo, ok := self.data.ConstantPool[index].(data.ClassInfo)
-	if !ok {
-		panic(fmt.Sprintf("given index (%d) indicates a invalid cp_info", index))
-	}
-	return classInfo
-}
-
-func (self *JClass) getUtf8String(index uint16) string {
-	utf8Info, ok := self.data.ConstantPool[index].(data.Utf8Info)
-	if !ok {
-		panic(fmt.Sprintf("given index (%d) indicates a invalid cp_info", index))
-	}
-	return string(utf8Info.Bytes)
-}
-
 func (self *JClass) GetAccessFlags() uint16 {
 	return self.data.AccessFlags
 }
 
-func (self *JClass) GetName() string {
-	classInfo := self.getClassInfo(self.data.ThisClass)
-	return self.getUtf8String(classInfo.NameIndex)
-}
-
-func (self *JClass) GetSimpleName() string {
-	parts := strings.Split(self.GetName(), "/")
-	return parts[len(parts)-1]
-}
-
-func (self *JClass) GetCanonicalName() string {
-	name := self.GetName()
-	name = strings.Replace(name, "/", ".", -1)
-	name = strings.Replace(name, "$", ".", -1)
-	return name
+func (self *JClass) GetClassName() string {
+	classInfo := getClassInfo(self.data.ConstantPool, self.data.ThisClass)
+	return getUtf8String(self.data.ConstantPool, classInfo.NameIndex)
 }
 
 func (self *JClass) GetSuperclass() string {
-	classInfo := self.getClassInfo(self.data.SuperClass)
-	return self.getUtf8String(classInfo.NameIndex)
+	classInfo := getClassInfo(self.data.ConstantPool, self.data.SuperClass)
+	return getUtf8String(self.data.ConstantPool, classInfo.NameIndex)
 }
 
 func (self *JClass) GetInterfaces() []string {
 	interfaces := make([]string, self.data.InterfacesCount)
 	for i := uint16(0); i < self.data.InterfacesCount; i++ {
-		classInfo := self.getClassInfo(self.data.Interfaces[i])
-		interfaces[i] = self.getUtf8String(classInfo.NameIndex)
+		classInfo := getClassInfo(self.data.ConstantPool, self.data.Interfaces[i])
+		interfaces[i] = getUtf8String(self.data.ConstantPool, classInfo.NameIndex)
 	}
 	return interfaces
 }
@@ -488,4 +536,13 @@ func (self *JClass) GetAttributes() []*JAttribute {
 		attributes[i] = newJAttributeWithJClass(self, &self.data.Attributes[i])
 	}
 	return attributes
+}
+
+func (self *JClass) GetAttribute(name string) *JAttribute {
+	for _, attr := range self.GetAttributes() {
+		if attr.GetName() == name {
+			return attr
+		}
+	}
+	return nil
 }
