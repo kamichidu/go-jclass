@@ -7,6 +7,7 @@ import (
 	"github.com/kamichidu/go-jclass/data"
 	"io"
 	"os"
+	"reflect"
 )
 
 func getClassInfo(cp []data.CpInfo, index uint16) data.ClassInfo {
@@ -501,6 +502,9 @@ func (self *JClass) GetClassName() string {
 }
 
 func (self *JClass) GetSuperclass() string {
+	if self.data.SuperClass == 0 {
+		return ""
+	}
 	classInfo := getClassInfo(self.data.ConstantPool, self.data.SuperClass)
 	return getUtf8String(self.data.ConstantPool, classInfo.NameIndex)
 }
@@ -530,19 +534,67 @@ func (self *JClass) GetMethods() []*JMethod {
 	return methods
 }
 
-func (self *JClass) GetAttributes() []*JAttribute {
-	attributes := make([]*JAttribute, self.data.AttributesCount)
+func (self *JClass) GetAttributes() []data.AttributeInfo {
+	attributes := make([]data.AttributeInfo, self.data.AttributesCount)
 	for i := uint16(0); i < self.data.AttributesCount; i++ {
-		attributes[i] = newJAttribute(self.data.ConstantPool, &self.data.Attributes[i])
+		attributes[i] = self.data.Attributes[i]
 	}
 	return attributes
 }
 
-func (self *JClass) GetAttribute(name string) *JAttribute {
+func (self *JClass) GetAttribute(typ reflect.Type) data.AttributeInfo {
 	for _, attr := range self.GetAttributes() {
-		if attr.GetName() == name {
+		if reflect.TypeOf(attr).AssignableTo(typ) {
 			return attr
 		}
 	}
 	return nil
+}
+
+type JInnerClass struct {
+	name           string
+	simpleName     string
+	accessFlags    uint16
+	outerClassName string
+}
+
+func (self *JInnerClass) GetName() string {
+	return self.name
+}
+
+func (self *JInnerClass) GetSimpleName() string {
+	return self.simpleName
+}
+
+func (self *JInnerClass) GetAccessFlags() uint16 {
+	return self.accessFlags
+}
+
+func (self *JInnerClass) GetOuterClassName() string {
+	return self.outerClassName
+}
+
+func (self *JClass) GetInnerClasses() []*JInnerClass {
+	var attr *data.InnerClassesAttribute
+	if found := self.GetAttribute(reflect.TypeOf(attr)); found != nil {
+		attr, _ = found.(*data.InnerClassesAttribute)
+	} else {
+		return make([]*JInnerClass, 0)
+	}
+	inners := make([]*JInnerClass, attr.NumberOfClasses)
+	for i, class := range attr.Classes {
+		ici := getClassInfo(self.data.ConstantPool, class.InnerClassInfoIndex)
+		inner := &JInnerClass{}
+		inner.name = getUtf8String(self.data.ConstantPool, ici.NameIndex)
+		inner.accessFlags = class.InnerClassAccessFlags
+		if class.InnerNameIndex != 0 {
+			inner.simpleName = getUtf8String(self.data.ConstantPool, class.InnerNameIndex)
+		}
+		if class.OuterClassInfoIndex != 0 {
+			oci := getClassInfo(self.data.ConstantPool, class.OuterClassInfoIndex)
+			inner.outerClassName = getUtf8String(self.data.ConstantPool, oci.NameIndex)
+		}
+		inners[i] = inner
+	}
+	return inners
 }
