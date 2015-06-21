@@ -2,6 +2,7 @@ package jclass
 
 import (
 	"github.com/kamichidu/go-jclass/data"
+	"github.com/kamichidu/go-jclass/parser/md"
 )
 
 type JMethod struct {
@@ -26,6 +27,22 @@ func (self *JMethod) GetName() string {
 
 func (self *JMethod) GetDescriptor() string {
 	return self.enclosing.getUtf8String(self.data.DescriptorIndex)
+}
+
+func (self *JMethod) GetParameterTypes() []jclass.JType {
+	ret, err := md.Parse(self.GetDescriptor())
+	if err != nil {
+		panic(err)
+	}
+	return ret.GetParameterTypes()
+}
+
+func (self *JMethod) GetReturnType() jclass.JType {
+	ret, err := md.Parse(self.GetDescriptor())
+	if err != nil {
+		panic(err)
+	}
+	return ret.GetReturnType()
 }
 
 func (self *JMethod) GetAttributes() []*JAttribute {

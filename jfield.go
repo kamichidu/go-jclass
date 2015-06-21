@@ -2,6 +2,7 @@ package jclass
 
 import (
 	"github.com/kamichidu/go-jclass/data"
+	"github.com/kamichidu/go-jclass/parser/fd"
 )
 
 type JField struct {
@@ -26,6 +27,14 @@ func (self *JField) GetName() string {
 
 func (self *JField) GetDescriptor() string {
 	return self.enclosing.getUtf8String(self.data.DescriptorIndex)
+}
+
+func (self *JField) GetType() JType {
+	jt, err := fd.Parse(self.GetDescriptor())
+	if err != nil {
+		panic(err)
+	}
+	return jt
 }
 
 func (self *JField) GetAttributes() []*JAttribute {
