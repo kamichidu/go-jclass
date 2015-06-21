@@ -25,12 +25,12 @@ func (self *JMethod) GetName() string {
 	return getUtf8String(self.enclosing.data.ConstantPool, self.data.NameIndex)
 }
 
-func (self *JMethod) GetDescriptor() string {
+func (self *JMethod) getDescriptor() string {
 	return getUtf8String(self.enclosing.data.ConstantPool, self.data.DescriptorIndex)
 }
 
 func (self *JMethod) GetParameterTypes() []JType {
-	ret, err := md.Parse(self.GetDescriptor())
+	ret, err := md.Parse(self.getDescriptor())
 	if err != nil {
 		panic(err)
 	}
@@ -42,7 +42,7 @@ func (self *JMethod) GetParameterTypes() []JType {
 }
 
 func (self *JMethod) GetReturnType() JType {
-	ret, err := md.Parse(self.GetDescriptor())
+	ret, err := md.Parse(self.getDescriptor())
 	if err != nil {
 		panic(err)
 	}

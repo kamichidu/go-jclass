@@ -27,12 +27,12 @@ func (self *JField) GetName() string {
 	return getUtf8String(self.cp, self.data.NameIndex)
 }
 
-func (self *JField) GetDescriptor() string {
+func (self *JField) getDescriptor() string {
 	return getUtf8String(self.cp, self.data.DescriptorIndex)
 }
 
 func (self *JField) GetType() JType {
-	fdinfo, err := fd.Parse(self.GetDescriptor())
+	fdinfo, err := fd.Parse(self.getDescriptor())
 	if err != nil {
 		panic(err)
 	}
