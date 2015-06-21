@@ -2,15 +2,45 @@ package fd
 
 import (
 	"errors"
-	"github.com/kamichidu/go-jclass"
 	"strings"
 )
+
+type FDInfo struct {
+	TypeName      string
+	PrimitiveType bool
+	ReferenceType bool
+	ComponentType *FDInfo
+	ArrayType     bool
+	Dims          int
+}
+
+func NewPrimitiveType(typeName string) *FDInfo {
+	return &FDInfo{
+		TypeName:      typeName,
+		PrimitiveType: true,
+	}
+}
+
+func NewReferenceType(typeName string) *FDInfo {
+	return &FDInfo{
+		TypeName:      typeName,
+		ReferenceType: true,
+	}
+}
+
+func NewArrayType(componentType *FDInfo, dims int) *FDInfo {
+	return &FDInfo{
+		ComponentType: componentType,
+		Dims:          dims,
+		ArrayType:     true,
+	}
+}
 
 type FDLexer struct {
 	Text   []rune
 	Length int
 	Pos    int
-	Result jclass.JType
+	Result *FDInfo
 	Errors []string
 }
 
@@ -54,7 +84,7 @@ func (self *FDLexer) Error(s string) {
 	self.Errors = append(self.Errors, s)
 }
 
-func Parse(descriptor string) (jclass.JType, error) {
+func Parse(descriptor string) (*FDInfo, error) {
 	lexer := &FDLexer{
 		Text:   []rune(descriptor),
 		Length: len(descriptor),

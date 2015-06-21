@@ -30,11 +30,12 @@ func (self *JField) GetDescriptor() string {
 }
 
 func (self *JField) GetType() JType {
-	jt, err := fd.Parse(self.GetDescriptor())
+	fdinfo, err := fd.Parse(self.GetDescriptor())
 	if err != nil {
 		panic(err)
 	}
-	return jt
+
+	return newJType(fdinfo)
 }
 
 func (self *JField) GetAttributes() []*JAttribute {
@@ -43,4 +44,23 @@ func (self *JField) GetAttributes() []*JAttribute {
 		attributes[i] = newJAttributeWithJField(self.enclosing, self, &self.data.Attributes[i])
 	}
 	return attributes
+}
+
+func newJType(fdinfo *fd.FDInfo) JType {
+	if fdinfo.PrimitiveType {
+		return NewJPrimitiveType(fdinfo.TypeName)
+	} else if fdinfo.ReferenceType {
+		return NewJReferenceType(fdinfo.TypeName)
+	} else if fdinfo.ArrayType {
+		ct := fdinfo.ComponentType
+		if ct.PrimitiveType {
+			return NewJArrayType(NewJPrimitiveType(ct.TypeName), fdinfo.Dims)
+		} else if ct.ReferenceType {
+			return NewJArrayType(NewJReferenceType(ct.TypeName), fdinfo.Dims)
+		} else {
+			panic("???")
+		}
+	} else {
+		panic("???")
+	}
 }

@@ -2,7 +2,6 @@
 package fd
 
 import (
-    "github.com/kamichidu/go-jclass"
 )
 
 type FDToken struct {
@@ -12,18 +11,18 @@ type FDToken struct {
 }
 %}
 
-%type <jtype> FieldDescriptor
-%type <jtype> FieldType
-%type <jtype> BaseType
-%type <jtype> ObjectType
-%type <jtype> ArrayType
-%type <jtype> ComponentType
+%type <res> FieldDescriptor
+%type <res> FieldType
+%type <res> BaseType
+%type <res> ObjectType
+%type <res> ArrayType
+%type <res> ComponentType
 
 %token 'B' 'C' 'D' 'F' 'I' 'J' 'S' 'Z' 'L' ';' '['
 %token <token> CLASS_NAME
 
 %union {
-    jtype jclass.JType
+    res   *FDInfo
     token FDToken
 }
 
@@ -48,89 +47,55 @@ FieldType
 BaseType
     : 'B'
         {
-            $$ = jclass.NewJPrimitiveType("byte")
-            // if lexer, ok := yylex.(*DescriptorLexer); ok {
-            //     lexer.result.TypeName = "byte"
-            // }
+            $$ = NewPrimitiveType("byte")
         }
     | 'C'
         {
-            $$ = jclass.NewJPrimitiveType("char")
-            // if lexer, ok := yylex.(*DescriptorLexer); ok {
-            //     lexer.result.TypeName = "char"
-            // }
+            $$ = NewPrimitiveType("char")
         }
     | 'D'
         {
-            $$ = jclass.NewJPrimitiveType("double")
-            // if lexer, ok := yylex.(*DescriptorLexer); ok {
-            //     lexer.result.TypeName = "double"
-            // }
+            $$ = NewPrimitiveType("double")
         }
     | 'F'
         {
-            $$ = jclass.NewJPrimitiveType("float")
-            // if lexer, ok := yylex.(*DescriptorLexer); ok {
-            //     lexer.result.TypeName = "float"
-            // }
+            $$ = NewPrimitiveType("float")
         }
     | 'I'
         {
-            $$ = jclass.NewJPrimitiveType("int")
-            // if lexer, ok := yylex.(*DescriptorLexer); ok {
-            //     lexer.result.TypeName = "int"
-            // }
+            $$ = NewPrimitiveType("int")
         }
     | 'J'
         {
-            $$ = jclass.NewJPrimitiveType("long")
-            // if lexer, ok := yylex.(*DescriptorLexer); ok {
-            //     lexer.result.TypeName = "long"
-            // }
+            $$ = NewPrimitiveType("long")
         }
     | 'S'
         {
-            $$ = jclass.NewJPrimitiveType("short")
-            // if lexer, ok := yylex.(*DescriptorLexer); ok {
-            //     lexer.result.TypeName = "short"
-            // }
+            $$ = NewPrimitiveType("short")
         }
     | 'Z'
         {
-            $$ = jclass.NewJPrimitiveType("boolean")
-            // if lexer, ok := yylex.(*DescriptorLexer); ok {
-            //     lexer.result.TypeName = "boolean"
-            // }
+            $$ = NewPrimitiveType("boolean")
         }
     ;
 
 ObjectType
     : 'L' CLASS_NAME ';'
         {
-            $$ = jclass.NewJReferenceType($2.Text)
-            // if lexer, ok := yylex.(*DescriptorLexer); ok {
-            //     lexer.result.TypeName = $2.Text
-            // }
+            $$ = NewReferenceType($2.Text)
         }
     ;
 
 ArrayType
     : '[' ComponentType
         {
-            switch jtype := $2.(type) {
-            case *jclass.JPrimitiveType:
-                $$ = jclass.NewJArrayType(jtype, 1)
-            case *jclass.JReferenceType:
-                $$ = jclass.NewJArrayType(jtype, 1)
-            case *jclass.JArrayType:
-                $$ = jclass.NewJArrayType(jtype.GetComponentType(), jtype.GetDims() + 1)
-            default:
+            if $2.PrimitiveType || $2.ReferenceType {
+                $$ = NewArrayType($2, 1)
+            } else if $2.ArrayType {
+                $$ = NewArrayType($2.ComponentType, $2.Dims + 1)
+            } else {
                 panic("??? Siranai Kata da")
             }
-            // $$ = jclass.NewJArrayType($2, 1)
-            // if lexer, ok := yylex.(*DescriptorLexer); ok {
-            //     lexer.result.Dims++
-            // }
         }
     ;
 

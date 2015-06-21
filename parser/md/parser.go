@@ -5,7 +5,7 @@ import __yyfmt__ "fmt"
 
 //line ./parser/md/parser.go.y:2
 import (
-	"github.com/kamichidu/go-jclass"
+	"github.com/kamichidu/go-jclass/parser/fd"
 )
 
 type MDToken struct {
@@ -17,8 +17,8 @@ type MDToken struct {
 //line ./parser/md/parser.go.y:27
 type mdSymType struct {
 	yys    int
-	jtype  jclass.JType
-	params []jclass.JType
+	jtype  *fd.FDInfo
+	params []*fd.FDInfo
 	token  MDToken
 }
 
@@ -46,7 +46,7 @@ const mdEofCode = 1
 const mdErrCode = 2
 const mdMaxDepth = 200
 
-//line ./parser/md/parser.go.y:167
+//line ./parser/md/parser.go.y:135
 
 //line yacctab:1
 var mdExca = []int{
@@ -356,17 +356,19 @@ mddefault:
 		//line ./parser/md/parser.go.y:37
 		{
 			if l, ok := mdlex.(*MDLexer); ok {
-				l.Result.parameterTypes = mdS[mdpt-2].params
-				l.Result.returnType = mdS[mdpt-0].jtype
+				l.Result = &MDInfo{
+					ReturnType:     mdS[mdpt-0].jtype,
+					ParameterTypes: mdS[mdpt-2].params,
+				}
 			}
 		}
 	case 2:
-		//line ./parser/md/parser.go.y:47
+		//line ./parser/md/parser.go.y:49
 		{
-			mdVAL.params = make([]jclass.JType, 0)
+			mdVAL.params = make([]*fd.FDInfo, 0)
 		}
 	case 3:
-		//line ./parser/md/parser.go.y:51
+		//line ./parser/md/parser.go.y:53
 		{
 			mdVAL.params = append(mdS[mdpt-1].params, mdS[mdpt-0].jtype)
 		}
@@ -375,9 +377,9 @@ mddefault:
 	case 5:
 		mdVAL.jtype = mdS[mdpt-0].jtype
 	case 6:
-		//line ./parser/md/parser.go.y:63
+		//line ./parser/md/parser.go.y:65
 		{
-			mdVAL.jtype = jclass.NewJPrimitiveType("void")
+			mdVAL.jtype = fd.NewPrimitiveType("void")
 		}
 	case 7:
 		mdVAL.jtype = mdS[mdpt-0].jtype
@@ -386,94 +388,60 @@ mddefault:
 	case 9:
 		mdVAL.jtype = mdS[mdpt-0].jtype
 	case 10:
-		//line ./parser/md/parser.go.y:76
+		//line ./parser/md/parser.go.y:78
 		{
-			mdVAL.jtype = jclass.NewJPrimitiveType("byte")
-			// if lexer, ok := yylex.(*DescriptorLexer); ok {
-			//     lexer.result.TypeName = "byte"
-			// }
+			mdVAL.jtype = fd.NewPrimitiveType("byte")
 		}
 	case 11:
-		//line ./parser/md/parser.go.y:83
+		//line ./parser/md/parser.go.y:82
 		{
-			mdVAL.jtype = jclass.NewJPrimitiveType("char")
-			// if lexer, ok := yylex.(*DescriptorLexer); ok {
-			//     lexer.result.TypeName = "char"
-			// }
+			mdVAL.jtype = fd.NewPrimitiveType("char")
 		}
 	case 12:
-		//line ./parser/md/parser.go.y:90
+		//line ./parser/md/parser.go.y:86
 		{
-			mdVAL.jtype = jclass.NewJPrimitiveType("double")
-			// if lexer, ok := yylex.(*DescriptorLexer); ok {
-			//     lexer.result.TypeName = "double"
-			// }
+			mdVAL.jtype = fd.NewPrimitiveType("double")
 		}
 	case 13:
-		//line ./parser/md/parser.go.y:97
+		//line ./parser/md/parser.go.y:90
 		{
-			mdVAL.jtype = jclass.NewJPrimitiveType("float")
-			// if lexer, ok := yylex.(*DescriptorLexer); ok {
-			//     lexer.result.TypeName = "float"
-			// }
+			mdVAL.jtype = fd.NewPrimitiveType("float")
 		}
 	case 14:
-		//line ./parser/md/parser.go.y:104
+		//line ./parser/md/parser.go.y:94
 		{
-			mdVAL.jtype = jclass.NewJPrimitiveType("int")
-			// if lexer, ok := yylex.(*DescriptorLexer); ok {
-			//     lexer.result.TypeName = "int"
-			// }
+			mdVAL.jtype = fd.NewPrimitiveType("int")
 		}
 	case 15:
-		//line ./parser/md/parser.go.y:111
+		//line ./parser/md/parser.go.y:98
 		{
-			mdVAL.jtype = jclass.NewJPrimitiveType("long")
-			// if lexer, ok := yylex.(*DescriptorLexer); ok {
-			//     lexer.result.TypeName = "long"
-			// }
+			mdVAL.jtype = fd.NewPrimitiveType("long")
 		}
 	case 16:
-		//line ./parser/md/parser.go.y:118
+		//line ./parser/md/parser.go.y:102
 		{
-			mdVAL.jtype = jclass.NewJPrimitiveType("short")
-			// if lexer, ok := yylex.(*DescriptorLexer); ok {
-			//     lexer.result.TypeName = "short"
-			// }
+			mdVAL.jtype = fd.NewPrimitiveType("short")
 		}
 	case 17:
-		//line ./parser/md/parser.go.y:125
+		//line ./parser/md/parser.go.y:106
 		{
-			mdVAL.jtype = jclass.NewJPrimitiveType("boolean")
-			// if lexer, ok := yylex.(*DescriptorLexer); ok {
-			//     lexer.result.TypeName = "boolean"
-			// }
+			mdVAL.jtype = fd.NewPrimitiveType("boolean")
 		}
 	case 18:
-		//line ./parser/md/parser.go.y:135
+		//line ./parser/md/parser.go.y:113
 		{
-			mdVAL.jtype = jclass.NewJReferenceType(mdS[mdpt-1].token.Text)
-			// if lexer, ok := yylex.(*DescriptorLexer); ok {
-			//     lexer.result.TypeName = $2.Text
-			// }
+			mdVAL.jtype = fd.NewReferenceType(mdS[mdpt-1].token.Text)
 		}
 	case 19:
-		//line ./parser/md/parser.go.y:145
+		//line ./parser/md/parser.go.y:120
 		{
-			switch jtype := mdS[mdpt-0].jtype.(type) {
-			case *jclass.JPrimitiveType:
-				mdVAL.jtype = jclass.NewJArrayType(jtype, 1)
-			case *jclass.JReferenceType:
-				mdVAL.jtype = jclass.NewJArrayType(jtype, 1)
-			case *jclass.JArrayType:
-				mdVAL.jtype = jclass.NewJArrayType(jtype.GetComponentType(), jtype.GetDims()+1)
-			default:
+			if mdS[mdpt-0].jtype.PrimitiveType || mdS[mdpt-0].jtype.ReferenceType {
+				mdVAL.jtype = fd.NewArrayType(mdS[mdpt-0].jtype, 1)
+			} else if mdS[mdpt-0].jtype.ArrayType {
+				mdVAL.jtype = fd.NewArrayType(mdS[mdpt-0].jtype.ComponentType, mdS[mdpt-0].jtype.Dims+1)
+			} else {
 				panic("??? Siranai Kata da")
 			}
-			// $$ = jclass.NewJArrayType($2, 1)
-			// if lexer, ok := yylex.(*DescriptorLexer); ok {
-			//     lexer.result.Dims++
-			// }
 		}
 	case 20:
 		mdVAL.jtype = mdS[mdpt-0].jtype

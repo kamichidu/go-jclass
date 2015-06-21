@@ -6,6 +6,8 @@ import (
 	"fmt"
 	"github.com/kamichidu/go-jclass/data"
 	"io"
+	"os"
+	"strings"
 )
 
 func parseU1(in *bufio.Reader) (uint8, error) {
@@ -403,6 +405,16 @@ func NewJClass(in io.Reader) (*JClass, error) {
 	return jclass, nil
 }
 
+func NewJClassWithFilename(filename string) (*JClass, error) {
+	file, err := os.Open(filename)
+	if err != nil {
+		return nil, err
+	}
+	defer file.Close()
+
+	return NewJClass(file)
+}
+
 func (self *JClass) getClassInfo(index uint16) data.ClassInfo {
 	classInfo, ok := self.data.ConstantPool[index].(data.ClassInfo)
 	if !ok {
@@ -423,9 +435,21 @@ func (self *JClass) GetAccessFlags() uint16 {
 	return self.data.AccessFlags
 }
 
-func (self *JClass) GetThisClass() string {
+func (self *JClass) GetName() string {
 	classInfo := self.getClassInfo(self.data.ThisClass)
 	return self.getUtf8String(classInfo.NameIndex)
+}
+
+func (self *JClass) GetSimpleName() string {
+	parts := strings.Split(self.GetName(), "/")
+	return parts[len(parts)-1]
+}
+
+func (self *JClass) GetCanonicalName() string {
+	name := self.GetName()
+	name = strings.Replace(name, "/", ".", -1)
+	name = strings.Replace(name, "$", ".", -1)
+	return name
 }
 
 func (self *JClass) GetSuperclass() string {

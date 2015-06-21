@@ -4,9 +4,7 @@ package fd
 import __yyfmt__ "fmt"
 
 //line ./parser/fd/parser.go.y:2
-import (
-	"github.com/kamichidu/go-jclass"
-)
+import ()
 
 type FDToken struct {
 	Id   int
@@ -14,10 +12,10 @@ type FDToken struct {
 	Pos  int
 }
 
-//line ./parser/fd/parser.go.y:25
+//line ./parser/fd/parser.go.y:24
 type fdSymType struct {
 	yys   int
-	jtype jclass.JType
+	res   *FDInfo
 	token FDToken
 }
 
@@ -43,7 +41,7 @@ const fdEofCode = 1
 const fdErrCode = 2
 const fdMaxDepth = 200
 
-//line ./parser/fd/parser.go.y:141
+//line ./parser/fd/parser.go.y:106
 
 //line yacctab:1
 var fdExca = []int{
@@ -342,111 +340,77 @@ fddefault:
 	switch fdnt {
 
 	case 1:
-		//line ./parser/fd/parser.go.y:34
+		//line ./parser/fd/parser.go.y:33
 		{
-			fdVAL.jtype = fdS[fdpt-0].jtype
+			fdVAL.res = fdS[fdpt-0].res
 			if lexer, ok := fdlex.(*FDLexer); ok {
-				lexer.Result = fdVAL.jtype
+				lexer.Result = fdVAL.res
 			}
 		}
 	case 2:
-		fdVAL.jtype = fdS[fdpt-0].jtype
+		fdVAL.res = fdS[fdpt-0].res
 	case 3:
-		fdVAL.jtype = fdS[fdpt-0].jtype
+		fdVAL.res = fdS[fdpt-0].res
 	case 4:
-		fdVAL.jtype = fdS[fdpt-0].jtype
+		fdVAL.res = fdS[fdpt-0].res
 	case 5:
-		//line ./parser/fd/parser.go.y:50
+		//line ./parser/fd/parser.go.y:49
 		{
-			fdVAL.jtype = jclass.NewJPrimitiveType("byte")
-			// if lexer, ok := yylex.(*DescriptorLexer); ok {
-			//     lexer.result.TypeName = "byte"
-			// }
+			fdVAL.res = NewPrimitiveType("byte")
 		}
 	case 6:
-		//line ./parser/fd/parser.go.y:57
+		//line ./parser/fd/parser.go.y:53
 		{
-			fdVAL.jtype = jclass.NewJPrimitiveType("char")
-			// if lexer, ok := yylex.(*DescriptorLexer); ok {
-			//     lexer.result.TypeName = "char"
-			// }
+			fdVAL.res = NewPrimitiveType("char")
 		}
 	case 7:
-		//line ./parser/fd/parser.go.y:64
+		//line ./parser/fd/parser.go.y:57
 		{
-			fdVAL.jtype = jclass.NewJPrimitiveType("double")
-			// if lexer, ok := yylex.(*DescriptorLexer); ok {
-			//     lexer.result.TypeName = "double"
-			// }
+			fdVAL.res = NewPrimitiveType("double")
 		}
 	case 8:
-		//line ./parser/fd/parser.go.y:71
+		//line ./parser/fd/parser.go.y:61
 		{
-			fdVAL.jtype = jclass.NewJPrimitiveType("float")
-			// if lexer, ok := yylex.(*DescriptorLexer); ok {
-			//     lexer.result.TypeName = "float"
-			// }
+			fdVAL.res = NewPrimitiveType("float")
 		}
 	case 9:
-		//line ./parser/fd/parser.go.y:78
+		//line ./parser/fd/parser.go.y:65
 		{
-			fdVAL.jtype = jclass.NewJPrimitiveType("int")
-			// if lexer, ok := yylex.(*DescriptorLexer); ok {
-			//     lexer.result.TypeName = "int"
-			// }
+			fdVAL.res = NewPrimitiveType("int")
 		}
 	case 10:
-		//line ./parser/fd/parser.go.y:85
+		//line ./parser/fd/parser.go.y:69
 		{
-			fdVAL.jtype = jclass.NewJPrimitiveType("long")
-			// if lexer, ok := yylex.(*DescriptorLexer); ok {
-			//     lexer.result.TypeName = "long"
-			// }
+			fdVAL.res = NewPrimitiveType("long")
 		}
 	case 11:
-		//line ./parser/fd/parser.go.y:92
+		//line ./parser/fd/parser.go.y:73
 		{
-			fdVAL.jtype = jclass.NewJPrimitiveType("short")
-			// if lexer, ok := yylex.(*DescriptorLexer); ok {
-			//     lexer.result.TypeName = "short"
-			// }
+			fdVAL.res = NewPrimitiveType("short")
 		}
 	case 12:
-		//line ./parser/fd/parser.go.y:99
+		//line ./parser/fd/parser.go.y:77
 		{
-			fdVAL.jtype = jclass.NewJPrimitiveType("boolean")
-			// if lexer, ok := yylex.(*DescriptorLexer); ok {
-			//     lexer.result.TypeName = "boolean"
-			// }
+			fdVAL.res = NewPrimitiveType("boolean")
 		}
 	case 13:
-		//line ./parser/fd/parser.go.y:109
+		//line ./parser/fd/parser.go.y:84
 		{
-			fdVAL.jtype = jclass.NewJReferenceType(fdS[fdpt-1].token.Text)
-			// if lexer, ok := yylex.(*DescriptorLexer); ok {
-			//     lexer.result.TypeName = $2.Text
-			// }
+			fdVAL.res = NewReferenceType(fdS[fdpt-1].token.Text)
 		}
 	case 14:
-		//line ./parser/fd/parser.go.y:119
+		//line ./parser/fd/parser.go.y:91
 		{
-			switch jtype := fdS[fdpt-0].jtype.(type) {
-			case *jclass.JPrimitiveType:
-				fdVAL.jtype = jclass.NewJArrayType(jtype, 1)
-			case *jclass.JReferenceType:
-				fdVAL.jtype = jclass.NewJArrayType(jtype, 1)
-			case *jclass.JArrayType:
-				fdVAL.jtype = jclass.NewJArrayType(jtype.GetComponentType(), jtype.GetDims()+1)
-			default:
+			if fdS[fdpt-0].res.PrimitiveType || fdS[fdpt-0].res.ReferenceType {
+				fdVAL.res = NewArrayType(fdS[fdpt-0].res, 1)
+			} else if fdS[fdpt-0].res.ArrayType {
+				fdVAL.res = NewArrayType(fdS[fdpt-0].res.ComponentType, fdS[fdpt-0].res.Dims+1)
+			} else {
 				panic("??? Siranai Kata da")
 			}
-			// $$ = jclass.NewJArrayType($2, 1)
-			// if lexer, ok := yylex.(*DescriptorLexer); ok {
-			//     lexer.result.Dims++
-			// }
 		}
 	case 15:
-		fdVAL.jtype = fdS[fdpt-0].jtype
+		fdVAL.res = fdS[fdpt-0].res
 	}
 	goto fdstack /* stack new state and value */
 }

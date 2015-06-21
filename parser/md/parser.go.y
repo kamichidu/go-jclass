@@ -2,7 +2,7 @@
 package md
 
 import (
-    "github.com/kamichidu/go-jclass"
+    "github.com/kamichidu/go-jclass/parser/fd"
 )
 
 type MDToken struct {
@@ -25,8 +25,8 @@ type MDToken struct {
 %token <token> CLASS_NAME
 
 %union {
-    jtype  jclass.JType
-    params []jclass.JType
+    jtype  *fd.FDInfo
+    params []*fd.FDInfo
     token  MDToken
 }
 
@@ -36,8 +36,10 @@ MethodDescriptor
     : '(' ParameterDescriptors ')' ReturnDescriptor
         {
             if l, ok := mdlex.(*MDLexer); ok {
-                l.Result.parameterTypes = $2
-                l.Result.returnType = $4
+                l.Result = &MDInfo{
+                    ReturnType:     $4,
+                    ParameterTypes: $2,
+                }
             }
         }
     ;
@@ -45,7 +47,7 @@ MethodDescriptor
 ParameterDescriptors
     :
         {
-            $$ = make([]jclass.JType, 0)
+            $$ = make([]*fd.FDInfo, 0)
         }
     | ParameterDescriptors ParameterDescriptor
         {
@@ -61,7 +63,7 @@ ReturnDescriptor
     : FieldType
     | 'V'
         {
-            $$ = jclass.NewJPrimitiveType("void")
+            $$ = fd.NewPrimitiveType("void")
         }
     ;
 
@@ -74,89 +76,55 @@ FieldType
 BaseType
     : 'B'
         {
-            $$ = jclass.NewJPrimitiveType("byte")
-            // if lexer, ok := yylex.(*DescriptorLexer); ok {
-            //     lexer.result.TypeName = "byte"
-            // }
+            $$ = fd.NewPrimitiveType("byte")
         }
     | 'C'
         {
-            $$ = jclass.NewJPrimitiveType("char")
-            // if lexer, ok := yylex.(*DescriptorLexer); ok {
-            //     lexer.result.TypeName = "char"
-            // }
+            $$ = fd.NewPrimitiveType("char")
         }
     | 'D'
         {
-            $$ = jclass.NewJPrimitiveType("double")
-            // if lexer, ok := yylex.(*DescriptorLexer); ok {
-            //     lexer.result.TypeName = "double"
-            // }
+            $$ = fd.NewPrimitiveType("double")
         }
     | 'F'
         {
-            $$ = jclass.NewJPrimitiveType("float")
-            // if lexer, ok := yylex.(*DescriptorLexer); ok {
-            //     lexer.result.TypeName = "float"
-            // }
+            $$ = fd.NewPrimitiveType("float")
         }
     | 'I'
         {
-            $$ = jclass.NewJPrimitiveType("int")
-            // if lexer, ok := yylex.(*DescriptorLexer); ok {
-            //     lexer.result.TypeName = "int"
-            // }
+            $$ = fd.NewPrimitiveType("int")
         }
     | 'J'
         {
-            $$ = jclass.NewJPrimitiveType("long")
-            // if lexer, ok := yylex.(*DescriptorLexer); ok {
-            //     lexer.result.TypeName = "long"
-            // }
+            $$ = fd.NewPrimitiveType("long")
         }
     | 'S'
         {
-            $$ = jclass.NewJPrimitiveType("short")
-            // if lexer, ok := yylex.(*DescriptorLexer); ok {
-            //     lexer.result.TypeName = "short"
-            // }
+            $$ = fd.NewPrimitiveType("short")
         }
     | 'Z'
         {
-            $$ = jclass.NewJPrimitiveType("boolean")
-            // if lexer, ok := yylex.(*DescriptorLexer); ok {
-            //     lexer.result.TypeName = "boolean"
-            // }
+            $$ = fd.NewPrimitiveType("boolean")
         }
     ;
 
 ObjectType
     : 'L' CLASS_NAME ';'
         {
-            $$ = jclass.NewJReferenceType($2.Text)
-            // if lexer, ok := yylex.(*DescriptorLexer); ok {
-            //     lexer.result.TypeName = $2.Text
-            // }
+            $$ = fd.NewReferenceType($2.Text)
         }
     ;
 
 ArrayType
     : '[' ComponentType
         {
-            switch jtype := $2.(type) {
-            case *jclass.JPrimitiveType:
-                $$ = jclass.NewJArrayType(jtype, 1)
-            case *jclass.JReferenceType:
-                $$ = jclass.NewJArrayType(jtype, 1)
-            case *jclass.JArrayType:
-                $$ = jclass.NewJArrayType(jtype.GetComponentType(), jtype.GetDims() + 1)
-            default:
+            if $2.PrimitiveType || $2.ReferenceType {
+                $$ = fd.NewArrayType($2, 1)
+            } else if $2.ArrayType {
+                $$ = fd.NewArrayType($2.ComponentType, $2.Dims + 1)
+            } else {
                 panic("??? Siranai Kata da")
             }
-            // $$ = jclass.NewJArrayType($2, 1)
-            // if lexer, ok := yylex.(*DescriptorLexer); ok {
-            //     lexer.result.Dims++
-            // }
         }
     ;
 

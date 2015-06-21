@@ -3,28 +3,20 @@ package md
 import (
 	"errors"
 	"fmt"
-	"github.com/kamichidu/go-jclass"
+	"github.com/kamichidu/go-jclass/parser/fd"
 	"strings"
 )
 
-type MethodInfo struct {
-	returnType     jclass.JType
-	parameterTypes []jclass.JType
-}
-
-func (self *MethodInfo) GetReturnType() jclass.JType {
-	return self.returnType
-}
-
-func (self *MethodInfo) GetParameterTypes() []jclass.JType {
-	return self.parameterTypes
+type MDInfo struct {
+	ReturnType     *fd.FDInfo
+	ParameterTypes []*fd.FDInfo
 }
 
 type MDLexer struct {
 	Text   []rune
 	Length int
 	Pos    int
-	Result *MethodInfo
+	Result *MDInfo
 	Errors []string
 }
 
@@ -37,7 +29,7 @@ func (self *MDLexer) Lex(lval *mdSymType) int {
 	pos := self.Pos
 	self.Pos++
 	switch c {
-    case 'B', 'C', 'D', 'F', 'I', 'J', 'S', 'Z', 'L', ';', '[', '(', ')':
+	case 'B', 'C', 'D', 'F', 'I', 'J', 'S', 'Z', 'L', ';', '[', '(', ')':
 		lval.token = MDToken{
 			Id:   int(c),
 			Text: string(c),
@@ -65,16 +57,15 @@ func (self *MDLexer) Lex(lval *mdSymType) int {
 }
 
 func (self *MDLexer) Error(s string) {
-    desc := fmt.Sprintf("%v at %c (column %d)", s, self.Text[self.Pos], self.Pos)
+	desc := fmt.Sprintf("%v at %c (column %d)", s, self.Text[self.Pos], self.Pos)
 	self.Errors = append(self.Errors, desc)
 }
 
-func Parse(descriptor string) (*MethodInfo, error) {
+func Parse(descriptor string) (*MDInfo, error) {
 	lexer := &MDLexer{
 		Text:   []rune(descriptor),
 		Length: len(descriptor),
 		Pos:    0,
-        Result: &MethodInfo{},
 	}
 	ret := mdParse(lexer)
 	if ret != 0 {
