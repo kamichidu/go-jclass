@@ -3,17 +3,19 @@ package jclass
 import (
 	"github.com/kamichidu/go-jclass/data"
 	"github.com/kamichidu/go-jclass/parser/fd"
+	"math"
+	"reflect"
 )
 
 type JField struct {
-	enclosing *JClass
-	data      *data.FieldInfo
+	cp   []data.CpInfo
+	data *data.FieldInfo
 }
 
-func newJField(enclosing *JClass, data *data.FieldInfo) *JField {
+func newJField(cp []data.CpInfo, data *data.FieldInfo) *JField {
 	return &JField{
-		enclosing: enclosing,
-		data:      data,
+		cp:   cp,
+		data: data,
 	}
 }
 
@@ -22,11 +24,11 @@ func (self *JField) GetAccessFlags() uint16 {
 }
 
 func (self *JField) GetName() string {
-	return getUtf8String(self.enclosing.data.ConstantPool, self.data.NameIndex)
+	return getUtf8String(self.cp, self.data.NameIndex)
 }
 
 func (self *JField) GetDescriptor() string {
-	return getUtf8String(self.enclosing.data.ConstantPool, self.data.DescriptorIndex)
+	return getUtf8String(self.cp, self.data.DescriptorIndex)
 }
 
 func (self *JField) GetType() JType {
@@ -38,12 +40,55 @@ func (self *JField) GetType() JType {
 	return newJType(fdinfo)
 }
 
-func (self *JField) GetAttributes() []*JAttribute {
-	attributes := make([]*JAttribute, self.data.AttributesCount)
-	for i := uint16(0); i < self.data.AttributesCount; i++ {
-		attributes[i] = newJAttribute(self.enclosing.data.ConstantPool, &self.data.Attributes[i])
+func (self *JField) GetAttribute(typ reflect.Type) data.AttributeInfo {
+	for _, attr := range self.data.Attributes {
+		if reflect.TypeOf(attr).AssignableTo(typ) {
+			return attr
+		}
 	}
-	return attributes
+	return nil
+}
+
+func (self *JField) GetConstantValue() interface{} {
+	var cv *data.ConstantValueAttribute
+	if found := self.GetAttribute(reflect.TypeOf(cv)); found != nil {
+		cv, _ = found.(*data.ConstantValueAttribute)
+	} else {
+		return nil
+	}
+	cpInfo := self.cp[cv.ConstantValueIndex]
+	switch value := cpInfo.(type) {
+	case data.LongInfo:
+		// long
+		return int64(uint64(value.HighBytes)<<32 | uint64(value.LowBytes))
+	case data.FloatInfo:
+		// float
+		return math.Float32frombits(value.Bytes)
+	case data.DoubleInfo:
+		// double
+		return math.Float64frombits(uint64(value.HighBytes)<<32 | uint64(value.LowBytes))
+	case data.IntegerInfo:
+		// int, short, char, byte, or boolean
+		switch self.GetType().GetTypeName() {
+		case "boolean":
+            return value.Bytes != 0
+		case "byte":
+			return int8(value.Bytes)
+		case "char":
+			return rune(value.Bytes)
+		case "short":
+			return int16(value.Bytes)
+		case "int":
+			fallthrough
+		default:
+            return int32(value.Bytes)
+		}
+	case data.StringInfo:
+		// String
+		return getUtf8String(self.cp, value.StringIndex)
+	default:
+		panic("???")
+	}
 }
 
 func newJType(fdinfo *fd.FDInfo) JType {

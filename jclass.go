@@ -521,9 +521,18 @@ func (self *JClass) GetInterfaces() []string {
 func (self *JClass) GetFields() []*JField {
 	fields := make([]*JField, self.data.FieldsCount)
 	for i := uint16(0); i < self.data.FieldsCount; i++ {
-		fields[i] = newJField(self, &self.data.Fields[i])
+		fields[i] = newJField(self.data.ConstantPool, &self.data.Fields[i])
 	}
 	return fields
+}
+
+func (self *JClass) GetField(name string) *JField {
+	for _, field := range self.GetFields() {
+		if field.GetName() == name {
+			return field
+		}
+	}
+	return nil
 }
 
 func (self *JClass) GetMethods() []*JMethod {
