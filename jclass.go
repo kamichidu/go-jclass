@@ -2,29 +2,13 @@ package jclass
 
 import (
 	"bufio"
-	"errors"
 	"fmt"
 	"github.com/kamichidu/go-jclass/data"
 	"io"
 	"os"
 	"reflect"
+	"strings"
 )
-
-func getClassInfo(cp []data.CpInfo, index uint16) data.ClassInfo {
-	classInfo, ok := cp[index].(data.ClassInfo)
-	if !ok {
-		panic(fmt.Sprintf("given index (%d) indicates a invalid cp_info", index))
-	}
-	return classInfo
-}
-
-func getUtf8String(cp []data.CpInfo, index uint16) string {
-	utf8Info, ok := cp[index].(data.Utf8Info)
-	if !ok {
-		panic(fmt.Sprintf("given index (%d) indicates a invalid cp_info", index))
-	}
-	return string(utf8Info.Bytes)
-}
 
 func parseU1(in *bufio.Reader) (uint8, error) {
 	value, err := in.ReadByte()
@@ -622,4 +606,20 @@ func (self *JClass) GetSourceFile() string {
 		return ""
 	}
 	return getUtf8String(self.data.ConstantPool, attr.SourcefileIndex)
+}
+
+func getClassInfo(cp []data.CpInfo, index uint16) data.ClassInfo {
+	classInfo, ok := cp[index].(data.ClassInfo)
+	if !ok {
+		panic(fmt.Sprintf("given index (%d) indicates a invalid cp_info", index))
+	}
+	return classInfo
+}
+
+func getUtf8String(cp []data.CpInfo, index uint16) string {
+	utf8Info, ok := cp[index].(data.Utf8Info)
+	if !ok {
+		panic(fmt.Sprintf("given index (%d) indicates a invalid cp_info", index))
+	}
+	return string(utf8Info.Bytes)
 }
