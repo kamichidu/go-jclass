@@ -48,7 +48,7 @@ type AttributeInfo interface {
 type GeneralAttributeInfo struct {
 	AttributeNameIndex uint16
 	AttributeLength    uint32
-	Info []uint8
+	Info               []uint8
 }
 
 type ConstantValueAttribute struct {
@@ -68,8 +68,8 @@ type InnerClassAttribute struct {
 type InnerClassesAttribute struct {
 	AttributeNameIndex uint16
 	AttributeLength    uint32
-	NumberOfClasses uint16
-	Classes         []InnerClassAttribute
+	NumberOfClasses    uint16
+	Classes            []InnerClassAttribute
 }
 
 type DeprecatedAttribute struct {
@@ -80,5 +80,5 @@ type DeprecatedAttribute struct {
 type SignatureAttribute struct {
 	AttributeNameIndex uint16
 	AttributeLength    uint32
-	SignatureIndex uint16
+	SignatureIndex     uint16
 }
