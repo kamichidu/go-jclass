@@ -163,6 +163,16 @@ func (self *JClass) GetInnerClasses() []*JInnerClass {
 	return inners
 }
 
+func (self *JClass) GetSignature() string {
+	var attr *data.SignatureAttribute
+	if found := self.GetAttribute(reflect.TypeOf(attr)); found != nil {
+		attr, _ = found.(*data.SignatureAttribute)
+	} else {
+		return ""
+	}
+	return getUtf8String(self.data.ConstantPool, attr.SignatureIndex)
+}
+
 func (self *JClass) GetSourceFile() string {
 	var attr *data.SourceFileAttribute
 	if found := self.GetAttribute(reflect.TypeOf(attr)); found != nil {
