@@ -603,3 +603,13 @@ func (self *JClass) GetInnerClasses() []*JInnerClass {
 	}
 	return inners
 }
+
+func (self *JClass) GetSourceFile() string {
+	var attr *data.SourceFileAttribute
+	if found := self.GetAttribute(reflect.TypeOf(attr)); found != nil {
+		attr, _ = found.(*data.SourceFileAttribute)
+	} else {
+		return ""
+	}
+	return getUtf8String(self.data.ConstantPool, attr.SourcefileIndex)
+}

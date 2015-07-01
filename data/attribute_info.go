@@ -82,3 +82,9 @@ type SignatureAttribute struct {
 	AttributeLength    uint32
 	SignatureIndex     uint16
 }
+
+type SourceFileAttribute struct {
+	AttributeNameIndex uint16
+	AttributeLength    uint32
+	SourcefileIndex    uint16
+}
