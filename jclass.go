@@ -496,6 +496,16 @@ func (self *JClass) GetAccessFlags() uint16 {
 	return self.data.AccessFlags
 }
 
+func (self *JClass) GetPackageName() string {
+	bname := self.GetClassName()
+	idx := strings.LastIndex(bname, "/")
+	if idx == -1 {
+		return ""
+	}
+
+	return bname[0:idx]
+}
+
 func (self *JClass) GetClassName() string {
 	classInfo := getClassInfo(self.data.ConstantPool, self.data.ThisClass)
 	return getUtf8String(self.data.ConstantPool, classInfo.NameIndex)
