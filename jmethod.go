@@ -29,24 +29,24 @@ func (self *JMethod) GetDescriptor() string {
 	return getUtf8String(self.enclosing.data.ConstantPool, self.data.DescriptorIndex)
 }
 
-func (self *JMethod) GetParameterTypes() []JType {
+func (self *JMethod) GetParameterTypes() []string {
 	ret, err := md.Parse(self.GetDescriptor())
 	if err != nil {
 		panic(err)
 	}
-	types := make([]JType, len(ret.ParameterTypes))
-	for i := 0; i < len(ret.ParameterTypes); i++ {
-		types[i] = newJType(ret.ParameterTypes[i])
+	types := make([]string, len(ret.ParameterDescriptor))
+	for i := 0; i < len(types); i++ {
+		types[i] = toStringImpl(ret.ParameterDescriptor[i])
 	}
 	return types
 }
 
-func (self *JMethod) GetReturnType() JType {
+func (self *JMethod) GetReturnType() string {
 	ret, err := md.Parse(self.GetDescriptor())
 	if err != nil {
 		panic(err)
 	}
-	return newJType(ret.ReturnType)
+	return toStringImpl(ret.ReturnDescriptor)
 }
 
 func (self *JMethod) GetAttributes() []*JAttribute {

@@ -543,6 +543,16 @@ func (self *JClass) GetMethods() []*JMethod {
 	return methods
 }
 
+func (self *JClass) GetMethod(name string) []*JMethod {
+	methods := make([]*JMethod, 0)
+	for _, m := range self.GetMethods() {
+		if m.GetName() == name {
+			methods = append(methods, m)
+		}
+	}
+	return methods
+}
+
 func (self *JClass) GetAttributes() []data.AttributeInfo {
 	attributes := make([]data.AttributeInfo, self.data.AttributesCount)
 	for i := uint16(0); i < self.data.AttributesCount; i++ {

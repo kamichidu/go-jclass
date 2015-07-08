@@ -1,28 +1,30 @@
-//line ./parser/md/parser.go.y:2
+//line parser/md/parser.go.y:2
 package md
 
 import __yyfmt__ "fmt"
 
-//line ./parser/md/parser.go.y:2
+//line parser/md/parser.go.y:2
 import (
-	"github.com/kamichidu/go-jclass/parser/fd"
+	c "github.com/kamichidu/go-jclass/parser/common"
 )
 
-type MDToken struct {
-	Id   int
-	Text string
-	Pos  int
-}
-
-//line ./parser/md/parser.go.y:27
+//line parser/md/parser.go.y:23
 type mdSymType struct {
-	yys    int
-	jtype  *fd.FDInfo
-	params []*fd.FDInfo
-	token  MDToken
+	yys                  int
+	methodDescriptor     *c.MethodDescriptor
+	parameterDescriptors []*c.ParameterDescriptor
+	parameterDescriptor  *c.ParameterDescriptor
+	returnDescriptor     *c.ReturnDescriptor
+	fieldType            *c.FieldType
+	baseType             *c.BaseType
+	objectType           *c.ObjectType
+	arrayType            *c.ArrayType
+	componentType        *c.ComponentType
+	className            *c.ClassName
+	token                *c.Token
 }
 
-const CLASS_NAME = 57346
+const IDENTIFIER = 57346
 
 var mdToknames = []string{
 	"'B'",
@@ -38,7 +40,7 @@ var mdToknames = []string{
 	"'['",
 	"'('",
 	"')'",
-	"CLASS_NAME",
+	"IDENTIFIER",
 }
 var mdStatenames = []string{}
 
@@ -46,7 +48,7 @@ const mdEofCode = 1
 const mdErrCode = 2
 const mdMaxDepth = 200
 
-//line ./parser/md/parser.go.y:135
+//line parser/md/parser.go.y:185
 
 //line yacctab:1
 var mdExca = []int{
@@ -55,7 +57,7 @@ var mdExca = []int{
 	-2, 0,
 }
 
-const mdNprod = 21
+const mdNprod = 23
 const mdPrivate = 57344
 
 var mdTokenNames []string
@@ -65,46 +67,47 @@ const mdLast = 58
 
 var mdAct = []int{
 
-	10, 11, 12, 13, 14, 15, 16, 17, 18, 23,
-	19, 26, 2, 1, 22, 10, 11, 12, 13, 14,
-	15, 16, 17, 18, 24, 19, 9, 4, 10, 11,
-	12, 13, 14, 15, 16, 17, 18, 6, 19, 8,
-	7, 20, 21, 5, 3, 0, 0, 0, 0, 0,
-	0, 0, 0, 0, 0, 0, 0, 25,
+	10, 11, 12, 13, 14, 15, 16, 17, 18, 29,
+	19, 24, 2, 23, 22, 10, 11, 12, 13, 14,
+	15, 16, 17, 18, 25, 19, 9, 4, 10, 11,
+	12, 13, 14, 15, 16, 17, 18, 6, 19, 27,
+	8, 7, 21, 20, 5, 28, 3, 1, 0, 0,
+	0, 0, 0, 0, 0, 0, 0, 26,
 }
 var mdPact = []int{
 
 	-3, -1000, -1000, 11, -4, -1000, -1000, -1000, -1000, -1000,
-	-1000, -1000, -1000, -1000, -1000, -1000, -1000, -1000, -8, 24,
-	-1000, -1000, -1000, -2, -1000, -1000, -1000,
+	-1000, -1000, -1000, -1000, -1000, -1000, -1000, -1000, -6, 24,
+	-1000, -1000, -1000, 26, -1000, -1000, -1000, -1000, -8, -1000,
 }
 var mdPgo = []int{
 
-	0, 44, 43, 41, 37, 40, 39, 26, 24, 13,
+	0, 47, 46, 44, 43, 37, 41, 40, 26, 24,
+	13,
 }
 var mdR1 = []int{
 
-	0, 9, 1, 1, 2, 3, 3, 4, 4, 4,
-	5, 5, 5, 5, 5, 5, 5, 5, 6, 7,
-	8,
+	0, 1, 2, 2, 3, 4, 4, 5, 5, 5,
+	6, 6, 6, 6, 6, 6, 6, 6, 7, 8,
+	9, 10, 10,
 }
 var mdR2 = []int{
 
 	0, 4, 0, 2, 1, 1, 1, 1, 1, 1,
 	1, 1, 1, 1, 1, 1, 1, 1, 3, 2,
-	1,
+	1, 3, 1,
 }
 var mdChk = []int{
 
-	-1000, -9, 15, -1, 16, -2, -4, -5, -6, -7,
+	-1000, -1, 15, -2, 16, -3, -5, -6, -7, -8,
 	4, 5, 6, 7, 8, 9, 10, 11, 12, 14,
-	-3, -4, 18, 17, -8, -4, 13,
+	-4, -5, 18, -10, 17, -9, -5, 13, 19, 17,
 }
 var mdDef = []int{
 
 	0, -2, 2, 0, 0, 3, 4, 7, 8, 9,
 	10, 11, 12, 13, 14, 15, 16, 17, 0, 0,
-	1, 5, 6, 0, 19, 20, 18,
+	1, 5, 6, 0, 22, 19, 20, 18, 0, 21,
 }
 var mdTok1 = []int{
 
@@ -112,7 +115,7 @@ var mdTok1 = []int{
 	3, 3, 3, 3, 3, 3, 3, 3, 3, 3,
 	3, 3, 3, 3, 3, 3, 3, 3, 3, 3,
 	3, 3, 3, 3, 3, 3, 3, 3, 3, 3,
-	15, 16, 3, 3, 3, 3, 3, 3, 3, 3,
+	15, 16, 3, 3, 3, 3, 3, 19, 3, 3,
 	3, 3, 3, 3, 3, 3, 3, 3, 3, 13,
 	3, 3, 3, 3, 3, 3, 4, 5, 6, 3,
 	7, 3, 3, 8, 9, 3, 12, 3, 3, 3,
@@ -353,98 +356,143 @@ mddefault:
 	switch mdnt {
 
 	case 1:
-		//line ./parser/md/parser.go.y:37
+		//line parser/md/parser.go.y:41
 		{
+			mdVAL.methodDescriptor = &c.MethodDescriptor{
+				ParameterDescriptor: mdS[mdpt-2].parameterDescriptors,
+				ReturnDescriptor:    mdS[mdpt-0].returnDescriptor,
+			}
 			if l, ok := mdlex.(*MDLexer); ok {
-				l.Result = &MDInfo{
-					ReturnType:     mdS[mdpt-0].jtype,
-					ParameterTypes: mdS[mdpt-2].params,
-				}
+				l.Result = mdVAL.methodDescriptor
 			}
 		}
 	case 2:
-		//line ./parser/md/parser.go.y:49
+		//line parser/md/parser.go.y:54
 		{
-			mdVAL.params = make([]*fd.FDInfo, 0)
+			mdVAL.parameterDescriptors = make([]*c.ParameterDescriptor, 0)
 		}
 	case 3:
-		//line ./parser/md/parser.go.y:53
+		//line parser/md/parser.go.y:58
 		{
-			mdVAL.params = append(mdS[mdpt-1].params, mdS[mdpt-0].jtype)
+			mdVAL.parameterDescriptors = append(mdS[mdpt-1].parameterDescriptors, mdS[mdpt-0].parameterDescriptor)
 		}
 	case 4:
-		mdVAL.jtype = mdS[mdpt-0].jtype
-	case 5:
-		mdVAL.jtype = mdS[mdpt-0].jtype
-	case 6:
-		//line ./parser/md/parser.go.y:65
+		//line parser/md/parser.go.y:65
 		{
-			mdVAL.jtype = fd.NewPrimitiveType("void")
+			mdVAL.parameterDescriptor = &c.ParameterDescriptor{
+				FieldType: mdS[mdpt-0].fieldType,
+			}
+		}
+	case 5:
+		//line parser/md/parser.go.y:74
+		{
+			mdVAL.returnDescriptor = &c.ReturnDescriptor{
+				FieldType: mdS[mdpt-0].fieldType,
+			}
+		}
+	case 6:
+		//line parser/md/parser.go.y:80
+		{
+			mdVAL.returnDescriptor = &c.ReturnDescriptor{
+				VoidDescriptor: &c.VoidDescriptor{"void"},
+			}
 		}
 	case 7:
-		mdVAL.jtype = mdS[mdpt-0].jtype
-	case 8:
-		mdVAL.jtype = mdS[mdpt-0].jtype
-	case 9:
-		mdVAL.jtype = mdS[mdpt-0].jtype
-	case 10:
-		//line ./parser/md/parser.go.y:78
+		//line parser/md/parser.go.y:89
 		{
-			mdVAL.jtype = fd.NewPrimitiveType("byte")
+			mdVAL.fieldType = &c.FieldType{
+				BaseType: mdS[mdpt-0].baseType,
+			}
+		}
+	case 8:
+		//line parser/md/parser.go.y:95
+		{
+			mdVAL.fieldType = &c.FieldType{
+				ObjectType: mdS[mdpt-0].objectType,
+			}
+		}
+	case 9:
+		//line parser/md/parser.go.y:101
+		{
+			mdVAL.fieldType = &c.FieldType{
+				ArrayType: mdS[mdpt-0].arrayType,
+			}
+		}
+	case 10:
+		//line parser/md/parser.go.y:110
+		{
+			mdVAL.baseType = &c.BaseType{"byte"}
 		}
 	case 11:
-		//line ./parser/md/parser.go.y:82
+		//line parser/md/parser.go.y:114
 		{
-			mdVAL.jtype = fd.NewPrimitiveType("char")
+			mdVAL.baseType = &c.BaseType{"char"}
 		}
 	case 12:
-		//line ./parser/md/parser.go.y:86
+		//line parser/md/parser.go.y:118
 		{
-			mdVAL.jtype = fd.NewPrimitiveType("double")
+			mdVAL.baseType = &c.BaseType{"double"}
 		}
 	case 13:
-		//line ./parser/md/parser.go.y:90
+		//line parser/md/parser.go.y:122
 		{
-			mdVAL.jtype = fd.NewPrimitiveType("float")
+			mdVAL.baseType = &c.BaseType{"float"}
 		}
 	case 14:
-		//line ./parser/md/parser.go.y:94
+		//line parser/md/parser.go.y:126
 		{
-			mdVAL.jtype = fd.NewPrimitiveType("int")
+			mdVAL.baseType = &c.BaseType{"int"}
 		}
 	case 15:
-		//line ./parser/md/parser.go.y:98
+		//line parser/md/parser.go.y:130
 		{
-			mdVAL.jtype = fd.NewPrimitiveType("long")
+			mdVAL.baseType = &c.BaseType{"long"}
 		}
 	case 16:
-		//line ./parser/md/parser.go.y:102
+		//line parser/md/parser.go.y:134
 		{
-			mdVAL.jtype = fd.NewPrimitiveType("short")
+			mdVAL.baseType = &c.BaseType{"short"}
 		}
 	case 17:
-		//line ./parser/md/parser.go.y:106
+		//line parser/md/parser.go.y:138
 		{
-			mdVAL.jtype = fd.NewPrimitiveType("boolean")
+			mdVAL.baseType = &c.BaseType{"boolean"}
 		}
 	case 18:
-		//line ./parser/md/parser.go.y:113
+		//line parser/md/parser.go.y:145
 		{
-			mdVAL.jtype = fd.NewReferenceType(mdS[mdpt-1].token.Text)
+			mdVAL.objectType = &c.ObjectType{
+				ClassName: mdS[mdpt-1].className,
+			}
 		}
 	case 19:
-		//line ./parser/md/parser.go.y:120
+		//line parser/md/parser.go.y:154
 		{
-			if mdS[mdpt-0].jtype.PrimitiveType || mdS[mdpt-0].jtype.ReferenceType {
-				mdVAL.jtype = fd.NewArrayType(mdS[mdpt-0].jtype, 1)
-			} else if mdS[mdpt-0].jtype.ArrayType {
-				mdVAL.jtype = fd.NewArrayType(mdS[mdpt-0].jtype.ComponentType, mdS[mdpt-0].jtype.Dims+1)
-			} else {
-				panic("??? Siranai Kata da")
+			mdVAL.arrayType = &c.ArrayType{
+				ComponentType: mdS[mdpt-0].componentType,
 			}
 		}
 	case 20:
-		mdVAL.jtype = mdS[mdpt-0].jtype
+		//line parser/md/parser.go.y:163
+		{
+			mdVAL.componentType = &c.ComponentType{
+				FieldType: mdS[mdpt-0].fieldType,
+			}
+		}
+	case 21:
+		//line parser/md/parser.go.y:172
+		{
+			mdVAL.className = &c.ClassName{
+				Identifier: append(mdS[mdpt-2].className.Identifier, mdS[mdpt-0].token.Text),
+			}
+		}
+	case 22:
+		//line parser/md/parser.go.y:178
+		{
+			mdVAL.className = &c.ClassName{
+				Identifier: []string{mdS[mdpt-0].token.Text},
+			}
+		}
 	}
 	goto mdstack /* stack new state and value */
 }

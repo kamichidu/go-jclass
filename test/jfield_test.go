@@ -35,3 +35,34 @@ func TestJField_GetConstantValue(t *testing.T) {
 		t.Errorf("doubleValue constant has 1.7976931348623157E308, but got %v", f.GetConstantValue())
 	}
 }
+
+func TestJField_GetType(t *testing.T) {
+    jc, _ := jclass.NewJClassWithFilename("./Constants.class")
+	if f := jc.GetField("stringValue"); f.GetType() != "java.lang.String" {
+		t.Errorf("stringValue constant has \"java.lang.String\", but got %v", f.GetType())
+	}
+	if f := jc.GetField("booleanValue"); f.GetType() != "boolean" {
+		t.Errorf("booleanValue constant has boolean, but got %v", f.GetType())
+	}
+	if f := jc.GetField("byteValue"); f.GetType() != "byte" {
+		t.Errorf("byteValue constant has byte, but got %v", f.GetType())
+	}
+	if f := jc.GetField("charValue"); f.GetType() != "char" {
+		t.Errorf("charValue constant has char, but got %v", f.GetType())
+	}
+    if f := jc.GetField("shortValue"); f.GetType() != "short" {
+		t.Errorf("shortValue constant has short, but got %v", f.GetType())
+	}
+    if f := jc.GetField("intValue"); f.GetType() != "int" {
+		t.Errorf("intValue constant has int, but got %v", f.GetType())
+	}
+    if f := jc.GetField("longValue"); f.GetType() != "long" {
+		t.Errorf("longValue constant has long, but got %v", f.GetType())
+	}
+    if f := jc.GetField("floatValue"); f.GetType() != "float" {
+		t.Errorf("floatValue constant has float, but got %v", f.GetType())
+	}
+    if f := jc.GetField("doubleValue"); f.GetType() != "double" {
+		t.Errorf("doubleValue constant has double, but got %v", f.GetType())
+	}
+}

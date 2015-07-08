@@ -1,25 +1,27 @@
-//line ./parser/fd/parser.go.y:2
+//line parser/fd/parser.go.y:2
 package fd
 
 import __yyfmt__ "fmt"
 
-//line ./parser/fd/parser.go.y:2
-import ()
+//line parser/fd/parser.go.y:2
+import (
+	c "github.com/kamichidu/go-jclass/parser/common"
+)
 
-type FDToken struct {
-	Id   int
-	Text string
-	Pos  int
-}
-
-//line ./parser/fd/parser.go.y:24
+//line parser/fd/parser.go.y:20
 type fdSymType struct {
-	yys   int
-	res   *FDInfo
-	token FDToken
+	yys             int
+	fieldDescriptor *c.FieldDescriptor
+	fieldType       *c.FieldType
+	baseType        *c.BaseType
+	objectType      *c.ObjectType
+	arrayType       *c.ArrayType
+	componentType   *c.ComponentType
+	className       *c.ClassName
+	token           *c.Token
 }
 
-const CLASS_NAME = 57346
+const IDENTIFIER = 57346
 
 var fdToknames = []string{
 	"'B'",
@@ -33,7 +35,7 @@ var fdToknames = []string{
 	"'L'",
 	"';'",
 	"'['",
-	"CLASS_NAME",
+	"IDENTIFIER",
 }
 var fdStatenames = []string{}
 
@@ -41,7 +43,7 @@ const fdEofCode = 1
 const fdErrCode = 2
 const fdMaxDepth = 200
 
-//line ./parser/fd/parser.go.y:106
+//line parser/fd/parser.go.y:143
 
 //line yacctab:1
 var fdExca = []int{
@@ -50,7 +52,7 @@ var fdExca = []int{
 	-2, 0,
 }
 
-const fdNprod = 16
+const fdNprod = 18
 const fdPrivate = 57344
 
 var fdTokenNames []string
@@ -61,37 +63,40 @@ const fdLast = 26
 var fdAct = []int{
 
 	6, 7, 8, 9, 10, 11, 12, 13, 14, 2,
-	15, 19, 16, 17, 5, 4, 3, 1, 0, 0,
-	0, 0, 0, 0, 0, 18,
+	15, 20, 22, 16, 21, 17, 18, 5, 4, 3,
+	1, 0, 0, 0, 0, 19,
 }
 var fdPact = []int{
 
 	-4, -1000, -1000, -1000, -1000, -1000, -1000, -1000, -1000, -1000,
-	-1000, -1000, -1000, -1000, -3, -4, -2, -1000, -1000, -1000,
+	-1000, -1000, -1000, -1000, 0, -4, -2, -1000, -1000, -1000,
+	-1000, -3, -1000,
 }
 var fdPgo = []int{
 
-	0, 17, 9, 16, 15, 14, 13,
+	0, 20, 9, 19, 18, 17, 16, 13,
 }
 var fdR1 = []int{
 
 	0, 1, 2, 2, 2, 3, 3, 3, 3, 3,
-	3, 3, 3, 4, 5, 6,
+	3, 3, 3, 4, 5, 6, 7, 7,
 }
 var fdR2 = []int{
 
 	0, 1, 1, 1, 1, 1, 1, 1, 1, 1,
-	1, 1, 1, 3, 2, 1,
+	1, 1, 1, 3, 2, 1, 3, 1,
 }
 var fdChk = []int{
 
 	-1000, -1, -2, -3, -4, -5, 4, 5, 6, 7,
-	8, 9, 10, 11, 12, 14, 15, -6, -2, 13,
+	8, 9, 10, 11, 12, 14, -7, 15, -6, -2,
+	13, 16, 15,
 }
 var fdDef = []int{
 
 	0, -2, 1, 2, 3, 4, 5, 6, 7, 8,
-	9, 10, 11, 12, 0, 0, 0, 14, 15, 13,
+	9, 10, 11, 12, 0, 0, 0, 17, 14, 15,
+	13, 0, 16,
 }
 var fdTok1 = []int{
 
@@ -99,7 +104,7 @@ var fdTok1 = []int{
 	3, 3, 3, 3, 3, 3, 3, 3, 3, 3,
 	3, 3, 3, 3, 3, 3, 3, 3, 3, 3,
 	3, 3, 3, 3, 3, 3, 3, 3, 3, 3,
-	3, 3, 3, 3, 3, 3, 3, 3, 3, 3,
+	3, 3, 3, 3, 3, 3, 3, 16, 3, 3,
 	3, 3, 3, 3, 3, 3, 3, 3, 3, 13,
 	3, 3, 3, 3, 3, 3, 4, 5, 6, 3,
 	7, 3, 3, 8, 9, 3, 12, 3, 3, 3,
@@ -340,77 +345,111 @@ fddefault:
 	switch fdnt {
 
 	case 1:
-		//line ./parser/fd/parser.go.y:33
+		//line parser/fd/parser.go.y:35
 		{
-			fdVAL.res = fdS[fdpt-0].res
+			fdVAL.fieldDescriptor = &c.FieldDescriptor{
+				FieldType: fdS[fdpt-0].fieldType,
+			}
 			if lexer, ok := fdlex.(*FDLexer); ok {
-				lexer.Result = fdVAL.res
+				lexer.Result = fdVAL.fieldDescriptor
 			}
 		}
 	case 2:
-		fdVAL.res = fdS[fdpt-0].res
-	case 3:
-		fdVAL.res = fdS[fdpt-0].res
-	case 4:
-		fdVAL.res = fdS[fdpt-0].res
-	case 5:
-		//line ./parser/fd/parser.go.y:49
+		//line parser/fd/parser.go.y:47
 		{
-			fdVAL.res = NewPrimitiveType("byte")
+			fdVAL.fieldType = &c.FieldType{
+				BaseType: fdS[fdpt-0].baseType,
+			}
+		}
+	case 3:
+		//line parser/fd/parser.go.y:53
+		{
+			fdVAL.fieldType = &c.FieldType{
+				ObjectType: fdS[fdpt-0].objectType,
+			}
+		}
+	case 4:
+		//line parser/fd/parser.go.y:59
+		{
+			fdVAL.fieldType = &c.FieldType{
+				ArrayType: fdS[fdpt-0].arrayType,
+			}
+		}
+	case 5:
+		//line parser/fd/parser.go.y:68
+		{
+			fdVAL.baseType = &c.BaseType{"byte"}
 		}
 	case 6:
-		//line ./parser/fd/parser.go.y:53
+		//line parser/fd/parser.go.y:72
 		{
-			fdVAL.res = NewPrimitiveType("char")
+			fdVAL.baseType = &c.BaseType{"char"}
 		}
 	case 7:
-		//line ./parser/fd/parser.go.y:57
+		//line parser/fd/parser.go.y:76
 		{
-			fdVAL.res = NewPrimitiveType("double")
+			fdVAL.baseType = &c.BaseType{"double"}
 		}
 	case 8:
-		//line ./parser/fd/parser.go.y:61
+		//line parser/fd/parser.go.y:80
 		{
-			fdVAL.res = NewPrimitiveType("float")
+			fdVAL.baseType = &c.BaseType{"float"}
 		}
 	case 9:
-		//line ./parser/fd/parser.go.y:65
+		//line parser/fd/parser.go.y:84
 		{
-			fdVAL.res = NewPrimitiveType("int")
+			fdVAL.baseType = &c.BaseType{"int"}
 		}
 	case 10:
-		//line ./parser/fd/parser.go.y:69
+		//line parser/fd/parser.go.y:88
 		{
-			fdVAL.res = NewPrimitiveType("long")
+			fdVAL.baseType = &c.BaseType{"long"}
 		}
 	case 11:
-		//line ./parser/fd/parser.go.y:73
+		//line parser/fd/parser.go.y:92
 		{
-			fdVAL.res = NewPrimitiveType("short")
+			fdVAL.baseType = &c.BaseType{"short"}
 		}
 	case 12:
-		//line ./parser/fd/parser.go.y:77
+		//line parser/fd/parser.go.y:96
 		{
-			fdVAL.res = NewPrimitiveType("boolean")
+			fdVAL.baseType = &c.BaseType{"boolean"}
 		}
 	case 13:
-		//line ./parser/fd/parser.go.y:84
+		//line parser/fd/parser.go.y:103
 		{
-			fdVAL.res = NewReferenceType(fdS[fdpt-1].token.Text)
+			fdVAL.objectType = &c.ObjectType{
+				ClassName: fdS[fdpt-1].className,
+			}
 		}
 	case 14:
-		//line ./parser/fd/parser.go.y:91
+		//line parser/fd/parser.go.y:112
 		{
-			if fdS[fdpt-0].res.PrimitiveType || fdS[fdpt-0].res.ReferenceType {
-				fdVAL.res = NewArrayType(fdS[fdpt-0].res, 1)
-			} else if fdS[fdpt-0].res.ArrayType {
-				fdVAL.res = NewArrayType(fdS[fdpt-0].res.ComponentType, fdS[fdpt-0].res.Dims+1)
-			} else {
-				panic("??? Siranai Kata da")
+			fdVAL.arrayType = &c.ArrayType{
+				ComponentType: fdS[fdpt-0].componentType,
 			}
 		}
 	case 15:
-		fdVAL.res = fdS[fdpt-0].res
+		//line parser/fd/parser.go.y:121
+		{
+			fdVAL.componentType = &c.ComponentType{
+				FieldType: fdS[fdpt-0].fieldType,
+			}
+		}
+	case 16:
+		//line parser/fd/parser.go.y:130
+		{
+			fdVAL.className = &c.ClassName{
+				Identifier: append(fdS[fdpt-2].className.Identifier, fdS[fdpt-0].token.Text),
+			}
+		}
+	case 17:
+		//line parser/fd/parser.go.y:136
+		{
+			fdVAL.className = &c.ClassName{
+				Identifier: []string{fdS[fdpt-0].token.Text},
+			}
+		}
 	}
 	goto fdstack /* stack new state and value */
 }
