@@ -2,30 +2,52 @@ package fd
 
 import (
 	"errors"
-	c "github.com/kamichidu/go-jclass/parser/common"
 	"strings"
 )
 
-type FDLexer struct {
-	*c.Lexer
-	Result *c.FieldDescriptor
-}
-
-func (self *FDLexer) Lex(lval *fdSymType) int {
-	token := self.Lexer.Lex()
-    if token == nil {
-        return 0
-    }
-	lval.token = token
-	return token.Id
-}
-
-func Parse(descriptor string) (*c.FieldDescriptor, error) {
-	lexer := &FDLexer{c.NewLexer(descriptor), nil}
-	ret := fdParse(lexer)
-	if ret != 0 {
-		return nil, errors.New(strings.Join(lexer.Errors, "\n"))
+func Parse(descriptor string) (string, error) {
+	length := len(descriptor)
+	if length < 1 {
+		return "", errors.New("Empty string is not a field descriptor")
 	}
 
-	return lexer.Result, nil
+	if length == 1 {
+		switch descriptor {
+		case "B":
+			return "byte", nil
+		case "C":
+			return "char", nil
+		case "D":
+			return "double", nil
+		case "F":
+			return "float", nil
+		case "I":
+			return "int", nil
+		case "J":
+			return "long", nil
+		case "S":
+			return "short", nil
+		case "Z":
+			return "boolean", nil
+		default:
+			return "", errors.New("Syntax error: " + descriptor)
+		}
+	}
+	if descriptor[0] == 'L' {
+		for i := 1; i < length; i++ {
+			if descriptor[i] == ';' {
+				if i != length-1 {
+					return "", errors.New("Syntax error: " + descriptor)
+				}
+				break
+			}
+		}
+		return strings.Replace(descriptor[1:length-1], "/", ".", -1), nil
+	}
+	if descriptor[0] == '[' {
+		ret, err := Parse(descriptor[1:])
+		return ret + "[]", err
+	}
+
+	return "", errors.New("Syntax error: " + descriptor)
 }

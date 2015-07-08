@@ -35,12 +35,12 @@ func (self *JField) GetDescriptor() string {
 }
 
 func (self *JField) GetType() string {
-	ast, err := fd.Parse(self.GetDescriptor())
+	ret, err := fd.Parse(self.GetDescriptor())
 	if err != nil {
 		panic(err)
 	}
 
-	return toString(ast)
+	return ret
 }
 
 func (self *JField) GetAttribute(typ reflect.Type) data.AttributeInfo {
