@@ -2,32 +2,36 @@
 package md
 
 import (
-    "github.com/kamichidu/go-jclass/parser/fd"
+    c "github.com/kamichidu/go-jclass/parser/common"
 )
-
-type MDToken struct {
-    Id int
-    Text string
-    Pos int
-}
 %}
 
-%type <params> ParameterDescriptors
-%type <jtype> ParameterDescriptor
-%type <jtype> ReturnDescriptor
-%type <jtype> FieldType
-%type <jtype> BaseType
-%type <jtype> ObjectType
-%type <jtype> ArrayType
-%type <jtype> ComponentType
+%type <methodDescriptor> MethodDescriptor
+%type <parameterDescriptors> ParameterDescriptors
+%type <parameterDescriptor> ParameterDescriptor
+%type <returnDescriptor> ReturnDescriptor
+%type <fieldType> FieldType
+%type <baseType> BaseType
+%type <objectType> ObjectType
+%type <arrayType> ArrayType
+%type <componentType> ComponentType
+%type <className> ClassName
 
 %token 'B' 'C' 'D' 'F' 'I' 'J' 'S' 'Z' 'L' ';' '[' '(' ')'
-%token <token> CLASS_NAME
+%token <token> IDENTIFIER
 
 %union {
-    jtype  *fd.FDInfo
-    params []*fd.FDInfo
-    token  MDToken
+    methodDescriptor     *c.MethodDescriptor
+    parameterDescriptors []*c.ParameterDescriptor
+    parameterDescriptor  *c.ParameterDescriptor
+    returnDescriptor     *c.ReturnDescriptor
+    fieldType            *c.FieldType
+    baseType             *c.BaseType
+    objectType           *c.ObjectType
+    arrayType            *c.ArrayType
+    componentType        *c.ComponentType
+    className            *c.ClassName
+    token                *c.Token
 }
 
 %%
@@ -35,11 +39,12 @@ type MDToken struct {
 MethodDescriptor
     : '(' ParameterDescriptors ')' ReturnDescriptor
         {
+            $$ = &c.MethodDescriptor{
+                ParameterDescriptor: $2,
+                ReturnDescriptor: $4,
+            }
             if l, ok := mdlex.(*MDLexer); ok {
-                l.Result = &MDInfo{
-                    ReturnType:     $4,
-                    ParameterTypes: $2,
-                }
+                l.Result = $$
             }
         }
     ;
@@ -47,7 +52,7 @@ MethodDescriptor
 ParameterDescriptors
     :
         {
-            $$ = make([]*fd.FDInfo, 0)
+            $$ = make([]*c.ParameterDescriptor, 0)
         }
     | ParameterDescriptors ParameterDescriptor
         {
@@ -57,79 +62,124 @@ ParameterDescriptors
 
 ParameterDescriptor
     : FieldType
+        {
+            $$ = &c.ParameterDescriptor{
+                FieldType: $1,
+            }
+        }
     ;
 
 ReturnDescriptor
     : FieldType
+        {
+            $$ = &c.ReturnDescriptor{
+                FieldType: $1,
+            }
+        }
     | 'V'
         {
-            $$ = fd.NewPrimitiveType("void")
+            $$ = &c.ReturnDescriptor{
+                VoidDescriptor: &c.VoidDescriptor{"void"},
+            }
         }
     ;
 
 FieldType
     : BaseType
+        {
+            $$ = &c.FieldType{
+                BaseType: $1,
+            }
+        }
     | ObjectType
+        {
+            $$ = &c.FieldType{
+                ObjectType: $1,
+            }
+        }
     | ArrayType
+        {
+            $$ = &c.FieldType{
+                ArrayType: $1,
+            }
+        }
     ;
 
 BaseType
     : 'B'
         {
-            $$ = fd.NewPrimitiveType("byte")
+            $$ = &c.BaseType{"byte"}
         }
     | 'C'
         {
-            $$ = fd.NewPrimitiveType("char")
+            $$ = &c.BaseType{"char"}
         }
     | 'D'
         {
-            $$ = fd.NewPrimitiveType("double")
+            $$ = &c.BaseType{"double"}
         }
     | 'F'
         {
-            $$ = fd.NewPrimitiveType("float")
+            $$ = &c.BaseType{"float"}
         }
     | 'I'
         {
-            $$ = fd.NewPrimitiveType("int")
+            $$ = &c.BaseType{"int"}
         }
     | 'J'
         {
-            $$ = fd.NewPrimitiveType("long")
+            $$ = &c.BaseType{"long"}
         }
     | 'S'
         {
-            $$ = fd.NewPrimitiveType("short")
+            $$ = &c.BaseType{"short"}
         }
     | 'Z'
         {
-            $$ = fd.NewPrimitiveType("boolean")
+            $$ = &c.BaseType{"boolean"}
         }
     ;
 
 ObjectType
-    : 'L' CLASS_NAME ';'
+    : 'L' ClassName ';'
         {
-            $$ = fd.NewReferenceType($2.Text)
+            $$ = &c.ObjectType{
+                ClassName: $2,
+            }
         }
     ;
 
 ArrayType
     : '[' ComponentType
         {
-            if $2.PrimitiveType || $2.ReferenceType {
-                $$ = fd.NewArrayType($2, 1)
-            } else if $2.ArrayType {
-                $$ = fd.NewArrayType($2.ComponentType, $2.Dims + 1)
-            } else {
-                panic("??? Siranai Kata da")
+            $$ = &c.ArrayType{
+                ComponentType: $2,
             }
         }
     ;
 
 ComponentType
     : FieldType
+        {
+            $$ = &c.ComponentType{
+                FieldType: $1,
+            }
+        }
+    ;
+
+ClassName
+    : ClassName '/' IDENTIFIER
+        {
+            $$ = &c.ClassName{
+                Identifier: append($1.Identifier, $3.Text),
+            }
+        }
+    | IDENTIFIER
+        {
+            $$ = &c.ClassName{
+                Identifier: []string{$1.Text},
+            }
+        }
     ;
 
 %%

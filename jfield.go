@@ -1,10 +1,13 @@
 package jclass
 
 import (
+	"fmt"
 	"github.com/kamichidu/go-jclass/data"
+	c "github.com/kamichidu/go-jclass/parser/common"
 	"github.com/kamichidu/go-jclass/parser/fd"
 	"math"
 	"reflect"
+	"strings"
 )
 
 type JField struct {
@@ -31,13 +34,13 @@ func (self *JField) getDescriptor() string {
 	return getUtf8String(self.cp, self.data.DescriptorIndex)
 }
 
-func (self *JField) GetType() JType {
-	fdinfo, err := fd.Parse(self.getDescriptor())
+func (self *JField) GetType() string {
+	ret, err := fd.Parse(self.getDescriptor())
 	if err != nil {
 		panic(err)
 	}
 
-	return newJType(fdinfo)
+	return ret
 }
 
 func (self *JField) GetAttribute(typ reflect.Type) data.AttributeInfo {
@@ -69,9 +72,9 @@ func (self *JField) GetConstantValue() interface{} {
 		return math.Float64frombits(uint64(value.HighBytes)<<32 | uint64(value.LowBytes))
 	case data.IntegerInfo:
 		// int, short, char, byte, or boolean
-		switch self.GetType().GetTypeName() {
+		switch self.GetType() {
 		case "boolean":
-            return value.Bytes != 0
+			return value.Bytes != 0
 		case "byte":
 			return int8(value.Bytes)
 		case "char":
@@ -81,7 +84,7 @@ func (self *JField) GetConstantValue() interface{} {
 		case "int":
 			fallthrough
 		default:
-            return int32(value.Bytes)
+			return int32(value.Bytes)
 		}
 	case data.StringInfo:
 		// String
@@ -91,21 +94,51 @@ func (self *JField) GetConstantValue() interface{} {
 	}
 }
 
-func newJType(fdinfo *fd.FDInfo) JType {
-	if fdinfo.PrimitiveType {
-		return NewJPrimitiveType(fdinfo.TypeName)
-	} else if fdinfo.ReferenceType {
-		return NewJReferenceType(fdinfo.TypeName)
-	} else if fdinfo.ArrayType {
-		ct := fdinfo.ComponentType
-		if ct.PrimitiveType {
-			return NewJArrayType(NewJPrimitiveType(ct.TypeName), fdinfo.Dims)
-		} else if ct.ReferenceType {
-			return NewJArrayType(NewJReferenceType(ct.TypeName), fdinfo.Dims)
+func toString(ast *c.FieldDescriptor) string {
+	return toStringImpl(ast)
+}
+
+func toStringImpl(val interface{}) string {
+	switch v := val.(type) {
+	case *c.FieldDescriptor:
+		return toStringImpl(v.FieldType)
+	case *c.FieldType:
+		if v.BaseType != nil {
+			return toStringImpl(v.BaseType)
+		} else if v.ObjectType != nil {
+			return toStringImpl(v.ObjectType)
 		} else {
-			panic("???")
+			return toStringImpl(v.ArrayType)
 		}
-	} else {
-		panic("???")
+	case *c.BaseType:
+		return v.Text
+	case *c.ObjectType:
+		return toStringImpl(v.ClassName)
+	case *c.ClassName:
+		return strings.Join(v.Identifier, ".")
+	case *c.ArrayType:
+		return toStringImpl(v.ComponentType) + "[]"
+	case *c.ComponentType:
+		return toStringImpl(v.FieldType)
+	case *c.MethodDescriptor:
+		params := make([]string, len(v.ParameterDescriptor))
+		for i := 0; i < len(params); i++ {
+			params[i] = toStringImpl(v.ParameterDescriptor[i])
+		}
+		ret := toStringImpl(v.ReturnDescriptor)
+
+		return strings.Join(params, ", ") + " : " + ret
+	case *c.ReturnDescriptor:
+		if v.FieldType != nil {
+			return toStringImpl(v.FieldType)
+		} else {
+			return toStringImpl(v.VoidDescriptor)
+		}
+	case *c.VoidDescriptor:
+		return v.Text
+	case *c.ParameterDescriptor:
+		return toStringImpl(v.FieldType)
+	default:
+		panic(fmt.Errorf("Unknown type (%s) detected.", reflect.TypeOf(v).String()))
 	}
 }

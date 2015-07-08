@@ -5,95 +5,49 @@ import (
 	"strings"
 )
 
-type FDInfo struct {
-	TypeName      string
-	PrimitiveType bool
-	ReferenceType bool
-	ComponentType *FDInfo
-	ArrayType     bool
-	Dims          int
-}
-
-func NewPrimitiveType(typeName string) *FDInfo {
-	return &FDInfo{
-		TypeName:      typeName,
-		PrimitiveType: true,
-	}
-}
-
-func NewReferenceType(typeName string) *FDInfo {
-	return &FDInfo{
-		TypeName:      typeName,
-		ReferenceType: true,
-	}
-}
-
-func NewArrayType(componentType *FDInfo, dims int) *FDInfo {
-	return &FDInfo{
-		ComponentType: componentType,
-		Dims:          dims,
-		ArrayType:     true,
-	}
-}
-
-type FDLexer struct {
-	Text   []rune
-	Length int
-	Pos    int
-	Result *FDInfo
-	Errors []string
-}
-
-func (self *FDLexer) Lex(lval *fdSymType) int {
-	if self.Pos >= self.Length {
-		return 0
+func Parse(descriptor string) (string, error) {
+	length := len(descriptor)
+	if length < 1 {
+		return "", errors.New("Empty string is not a field descriptor")
 	}
 
-	c := self.Text[self.Pos]
-	pos := self.Pos
-	self.Pos++
-	switch c {
-	case 'B', 'C', 'D', 'F', 'I', 'J', 'S', 'Z', 'L', ';', '[':
-		lval.token = FDToken{
-			Id:   int(c),
-			Text: string(c),
-			Pos:  pos,
+	if length == 1 {
+		switch descriptor {
+		case "B":
+			return "byte", nil
+		case "C":
+			return "char", nil
+		case "D":
+			return "double", nil
+		case "F":
+			return "float", nil
+		case "I":
+			return "int", nil
+		case "J":
+			return "long", nil
+		case "S":
+			return "short", nil
+		case "Z":
+			return "boolean", nil
+		default:
+			return "", errors.New("Syntax error: " + descriptor)
 		}
-		return lval.token.Id
-	default:
-		var className []rune
-		className = append(className, c)
-		for self.Pos < self.Length {
-			c = self.Text[self.Pos]
-			if c == ';' {
+	}
+	if descriptor[0] == 'L' {
+		for i := 1; i < length; i++ {
+			if descriptor[i] == ';' {
+				if i != length-1 {
+					return "", errors.New("Syntax error: " + descriptor)
+				}
 				break
 			}
-			className = append(className, c)
-			self.Pos++
 		}
-		lval.token = FDToken{
-			Id:   CLASS_NAME,
-			Text: string(className),
-			Pos:  pos,
-		}
-		return lval.token.Id
+		return strings.Replace(descriptor[1:length-1], "/", ".", -1), nil
 	}
-}
-
-func (self *FDLexer) Error(s string) {
-	self.Errors = append(self.Errors, s)
-}
-
-func Parse(descriptor string) (*FDInfo, error) {
-	lexer := &FDLexer{
-		Text:   []rune(descriptor),
-		Length: len(descriptor),
-		Pos:    0,
-	}
-	ret := fdParse(lexer)
-	if ret != 0 {
-		return nil, errors.New(strings.Join(lexer.Errors, "\n"))
+	if descriptor[0] == '[' {
+		ret, err := Parse(descriptor[1:])
+		return ret + "[]", err
 	}
 
-	return lexer.Result, nil
+	return "", errors.New("Syntax error: " + descriptor)
 }
