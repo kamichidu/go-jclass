@@ -26,6 +26,42 @@ func (self *JField) GetAccessFlags() uint16 {
 	return self.data.AccessFlags
 }
 
+func (self *JField) IsPublic() bool {
+	return (self.GetAccessFlags() & ACC_PUBLIC) == ACC_PUBLIC
+}
+
+func (self *JField) IsPrivate() bool {
+	return (self.GetAccessFlags() & ACC_PRIVATE) == ACC_PRIVATE
+}
+
+func (self *JField) IsProtected() bool {
+	return (self.GetAccessFlags() & ACC_PROTECTED) == ACC_PROTECTED
+}
+
+func (self *JField) IsStatic() bool {
+	return (self.GetAccessFlags() & ACC_STATIC) == ACC_STATIC
+}
+
+func (self *JField) IsFinal() bool {
+	return (self.GetAccessFlags() & ACC_FINAL) == ACC_FINAL
+}
+
+func (self *JField) IsVolatile() bool {
+	return (self.GetAccessFlags() & ACC_VOLATILE) == ACC_VOLATILE
+}
+
+func (self *JField) IsTransient() bool {
+	return (self.GetAccessFlags() & ACC_TRANSIENT) == ACC_TRANSIENT
+}
+
+func (self *JField) IsSynthetic() bool {
+	return (self.GetAccessFlags() & ACC_SYNTHETIC) == ACC_SYNTHETIC
+}
+
+func (self *JField) IsEnum() bool {
+	return (self.GetAccessFlags() & ACC_ENUM) == ACC_ENUM
+}
+
 func (self *JField) GetName() string {
 	return getUtf8String(self.cp, self.data.NameIndex)
 }

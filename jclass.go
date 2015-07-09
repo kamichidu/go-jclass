@@ -4,10 +4,32 @@ import (
 	"bufio"
 	"fmt"
 	"github.com/kamichidu/go-jclass/data"
+	"github.com/kamichidu/go-jclass/parser/md"
 	"io"
 	"os"
 	"reflect"
 	"strings"
+)
+
+const (
+	ACC_PUBLIC       = 0x0001
+	ACC_PRIVATE      = 0x0002
+	ACC_PROTECTED    = 0x0004
+	ACC_STATIC       = 0x0008
+	ACC_FINAL        = 0x0010
+	ACC_SUPER        = 0x0020
+	ACC_SYNCHRONIZED = 0x0020
+	ACC_BRIDGE       = 0x0040
+	ACC_VOLATILE     = 0x0040
+	ACC_TRANSIENT    = 0x0080
+	ACC_VARARGS      = 0x0080
+	ACC_NATIVE       = 0x0100
+	ACC_INTERFACE    = 0x0200
+	ACC_ABSTRACT     = 0x0400
+	ACC_STRICT       = 0x0800
+	ACC_SYNTHETIC    = 0x1000
+	ACC_ANNOTATION   = 0x2000
+	ACC_ENUM         = 0x4000
 )
 
 type JClass struct {
@@ -45,19 +67,68 @@ func (self *JClass) GetAccessFlags() uint16 {
 	return self.data.AccessFlags
 }
 
+func (self *JClass) IsPublic() bool {
+	return (self.GetAccessFlags() & ACC_PUBLIC) == ACC_PUBLIC
+}
+
+func (self *JClass) IsFinal() bool {
+	return (self.GetAccessFlags() & ACC_FINAL) == ACC_FINAL
+}
+
+func (self *JClass) IsSuper() bool {
+	return (self.GetAccessFlags() & ACC_SUPER) == ACC_SUPER
+}
+
+func (self *JClass) IsInterface() bool {
+	return (self.GetAccessFlags() & ACC_INTERFACE) == ACC_INTERFACE
+}
+
+func (self *JClass) IsAbstract() bool {
+	return (self.GetAccessFlags() & ACC_ABSTRACT) == ACC_ABSTRACT
+}
+
+func (self *JClass) IsSynthetic() bool {
+	return (self.GetAccessFlags() & ACC_SYNTHETIC) == ACC_SYNTHETIC
+}
+
+func (self *JClass) IsAnnotation() bool {
+	return (self.GetAccessFlags() & ACC_ANNOTATION) == ACC_ANNOTATION
+}
+
+func (self *JClass) IsEnum() bool {
+	return (self.GetAccessFlags() & ACC_ENUM) == ACC_ENUM
+}
+
 func (self *JClass) GetPackageName() string {
-	bname := self.GetClassName()
-	idx := strings.LastIndex(bname, "/")
+	name := self.GetName()
+	idx := strings.LastIndex(name, ".")
 	if idx == -1 {
 		return ""
 	}
 
-	return bname[0:idx]
+	return name[0:idx]
 }
 
-func (self *JClass) GetClassName() string {
+func (self *JClass) GetName() string {
 	classInfo := getClassInfo(self.data.ConstantPool, self.data.ThisClass)
-	return getUtf8String(self.data.ConstantPool, classInfo.NameIndex)
+	name := getUtf8String(self.data.ConstantPool, classInfo.NameIndex)
+	name = strings.Replace(name, "/", ".", -1)
+	return name
+}
+
+func (self *JClass) GetCanonicalName() string {
+	name := self.GetName()
+	name = strings.Replace(name, "$", ".", -1)
+	return name
+}
+
+func (self *JClass) GetSimpleName() string {
+	name := self.GetName()
+	idx := strings.LastIndex(name, ".")
+	if idx == -1 {
+		return name
+	}
+	return name[idx+1:]
 }
 
 func (self *JClass) GetSuperclass() string {
@@ -171,6 +242,41 @@ func (self *JClass) GetInnerClasses() []*JInnerClass {
 		inners[i] = inner
 	}
 	return inners
+}
+
+func (self *JClass) GetEnclosingClass() string {
+	var attr *data.EnclosingMethodAttribute
+	if found := self.GetAttribute(reflect.TypeOf(attr)); found != nil {
+		attr, _ = found.(*data.EnclosingMethodAttribute)
+	} else {
+		return ""
+	}
+	classInfo := getClassInfo(self.data.ConstantPool, attr.ClassIndex)
+	return getUtf8String(self.data.ConstantPool, classInfo.NameIndex)
+}
+
+func (self *JClass) GetEnclosingMethod() (string, []string, string) {
+	var attr *data.EnclosingMethodAttribute
+	if found := self.GetAttribute(reflect.TypeOf(attr)); found != nil {
+		attr, _ = found.(*data.EnclosingMethodAttribute)
+	} else {
+		return "", []string{}, ""
+	}
+	if attr.MethodIndex == uint16(0) {
+		return "", []string{}, ""
+	}
+	if nameAndTypeInfo, ok := self.data.ConstantPool[attr.MethodIndex].(*data.NameAndTypeInfo); ok {
+		name := getUtf8String(self.data.ConstantPool, nameAndTypeInfo.NameIndex)
+		descriptor := getUtf8String(self.data.ConstantPool, nameAndTypeInfo.DescriptorIndex)
+
+		paramTypes, retType, _, err := md.Parse(descriptor)
+		if err != nil {
+			panic("Internal error!")
+		}
+		return name, paramTypes, retType
+	} else {
+		panic("Internal error!")
+	}
 }
 
 func (self *JClass) GetSignature() string {

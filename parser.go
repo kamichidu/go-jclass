@@ -333,6 +333,20 @@ func parseAttributeInfo(cp []data.CpInfo, in *bufio.Reader) (data.AttributeInfo,
 			return nil, err
 		}
 		return attr, nil
+	case "EnclosingMethod":
+		attr := &data.EnclosingMethodAttribute{
+			AttributeNameIndex: nameIndex,
+			AttributeLength:    length,
+		}
+		attr.ClassIndex, err = parseU2(in)
+		if err != nil {
+			return nil, err
+		}
+		attr.MethodIndex, err = parseU2(in)
+		if err != nil {
+			return nil, err
+		}
+		return attr, nil
 	default:
 		info := make([]uint8, length)
 		for i := uint32(0); i < length; i++ {

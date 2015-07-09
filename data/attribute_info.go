@@ -72,6 +72,13 @@ type InnerClassesAttribute struct {
 	Classes            []InnerClassAttribute
 }
 
+type EnclosingMethodAttribute struct {
+	AttributeNameIndex uint16
+	AttributeLength    uint32
+	ClassIndex         uint16
+	MethodIndex        uint16
+}
+
 type DeprecatedAttribute struct {
 	AttributeNameIndex uint16
 	AttributeLength    uint32
