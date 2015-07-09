@@ -2,30 +2,41 @@ package md
 
 import (
 	"errors"
-	c "github.com/kamichidu/go-jclass/parser/common"
-	"strings"
+	"github.com/kamichidu/go-jclass/parser/fd"
 )
 
-type MDLexer struct {
-	*c.Lexer
-	Result *c.MethodDescriptor
-}
-
-func (self *MDLexer) Lex(lval *mdSymType) int {
-	token := self.Lexer.Lex()
-	if token == nil {
-		return 0
-	}
-	lval.token = token
-	return token.Id
-}
-
-func Parse(descriptor string) (*c.MethodDescriptor, error) {
-	lexer := &MDLexer{c.NewLexer(descriptor), nil}
-	ret := mdParse(lexer)
-	if ret != 0 {
-		return nil, errors.New(strings.Join(lexer.Errors, "\n"))
+func Parse(descriptor string) ([]string, string, int, error) {
+	length := len(descriptor)
+	if length < 3 {
+		return []string{}, "", 0, errors.New("Given string is not a method descriptor")
 	}
 
-	return lexer.Result, nil
+	p := 0
+	if descriptor[p] != '(' {
+		return []string{}, "", 0, errors.New("Method descriptor must start with `('.")
+	}
+	p++
+
+	paramTypes := make([]string, 0)
+	for descriptor[p] != ')' {
+		paramType, n, err := fd.Parse(descriptor[p:])
+		if err != nil {
+			return paramTypes, "", p, err
+		}
+		paramTypes = append(paramTypes, paramType)
+		p += n
+	}
+
+	if descriptor[p] != ')' {
+		return paramTypes, "", p, errors.New("Method descriptor must have balanced parenthesis.")
+	}
+	p++
+
+	if descriptor[p] == 'V' {
+		p++
+		return paramTypes, "void", p, nil
+	} else {
+		retType, n, err := fd.Parse(descriptor[p:])
+		return paramTypes, retType, p + n, err
+	}
 }

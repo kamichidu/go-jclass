@@ -30,23 +30,19 @@ func (self *JMethod) getDescriptor() string {
 }
 
 func (self *JMethod) GetParameterTypes() []string {
-	ret, err := md.Parse(self.getDescriptor())
+	params, _, _, err := md.Parse(self.getDescriptor())
 	if err != nil {
 		panic(err)
 	}
-	types := make([]string, len(ret.ParameterDescriptor))
-	for i := 0; i < len(types); i++ {
-		types[i] = toStringImpl(ret.ParameterDescriptor[i])
-	}
-	return types
+    return params
 }
 
 func (self *JMethod) GetReturnType() string {
-	ret, err := md.Parse(self.getDescriptor())
+	_, ret, _, err := md.Parse(self.getDescriptor())
 	if err != nil {
 		panic(err)
 	}
-	return toStringImpl(ret.ReturnDescriptor)
+	return ret
 }
 
 func (self *JMethod) GetAttributes() []data.AttributeInfo {

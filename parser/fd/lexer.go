@@ -5,49 +5,42 @@ import (
 	"strings"
 )
 
-func Parse(descriptor string) (string, error) {
+func Parse(descriptor string) (string, int, error) {
 	length := len(descriptor)
 	if length < 1 {
-		return "", errors.New("Empty string is not a field descriptor")
+		return "", 0, errors.New("Empty string is not a field descriptor")
 	}
 
-	if length == 1 {
-		switch descriptor {
-		case "B":
-			return "byte", nil
-		case "C":
-			return "char", nil
-		case "D":
-			return "double", nil
-		case "F":
-			return "float", nil
-		case "I":
-			return "int", nil
-		case "J":
-			return "long", nil
-		case "S":
-			return "short", nil
-		case "Z":
-			return "boolean", nil
-		default:
-			return "", errors.New("Syntax error: " + descriptor)
-		}
-	}
-	if descriptor[0] == 'L' {
-		for i := 1; i < length; i++ {
+	switch descriptor[0] {
+	case 'B':
+		return "byte", 1, nil
+	case 'C':
+		return "char", 1, nil
+	case 'D':
+		return "double", 1, nil
+	case 'F':
+		return "float", 1, nil
+	case 'I':
+		return "int", 1, nil
+	case 'J':
+		return "long", 1, nil
+	case 'S':
+		return "short", 1, nil
+	case 'Z':
+		return "boolean", 1, nil
+	case 'L':
+		i := 1
+		for ; i < length; i++ {
 			if descriptor[i] == ';' {
-				if i != length-1 {
-					return "", errors.New("Syntax error: " + descriptor)
-				}
 				break
 			}
 		}
-		return strings.Replace(descriptor[1:length-1], "/", ".", -1), nil
+        className := strings.Replace(descriptor[1:i], "/", ".", -1)
+		return className, i + 1, nil
+	case '[':
+		ret, n, err := Parse(descriptor[1:])
+		return ret + "[]", n + 1, err
+	default:
+		return "", 0, errors.New("Syntax error: " + descriptor)
 	}
-	if descriptor[0] == '[' {
-		ret, err := Parse(descriptor[1:])
-		return ret + "[]", err
-	}
-
-	return "", errors.New("Syntax error: " + descriptor)
 }

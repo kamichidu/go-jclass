@@ -35,7 +35,7 @@ func (self *JField) getDescriptor() string {
 }
 
 func (self *JField) GetType() string {
-	ret, err := fd.Parse(self.getDescriptor())
+	ret, _, err := fd.Parse(self.getDescriptor())
 	if err != nil {
 		panic(err)
 	}

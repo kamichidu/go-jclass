@@ -1,49 +1,31 @@
 package md
 
 import (
-	c "github.com/kamichidu/go-jclass/parser/common"
 	parser "github.com/kamichidu/go-jclass/parser/md"
 	"reflect"
+	"strings"
 	"testing"
 )
 
-func format(ast reflect.Value) string {
-	if ast.Kind() == reflect.Ptr {
-		if ast.IsNil() {
-			return "nil"
-		} else {
-			return format(ast.Elem())
-		}
-	}
-	if ast.Kind() == reflect.Slice || ast.Kind() == reflect.Array {
-		s := "["
-		for i := 0; i < ast.Len(); i++ {
-            s += format(ast.Index(i))
-			s += ","
-		}
-		s += "]"
-		return s
-	} else if ast.Kind() != reflect.Struct {
-		return ast.String()
-	}
-
-	s := ast.Type().String()
-	s += "("
-	for i := 0; i < ast.NumField(); i++ {
-		s += format(ast.Field(i))
-		s += ","
-	}
-	s += ")"
-	return s
-}
-
 func TestParseMethodDescriptor(t *testing.T) {
-	ok := func(md string, expect interface{}) {
+	type Expect struct {
+		P []string
+		R string
+	}
+
+	ok := func(md string, expect *Expect) {
 		t.Logf("Try to parse '%s'", md)
-		if ret, err := parser.Parse(md); err == nil {
-			if !reflect.DeepEqual(ret, expect) {
-                t.Errorf("Expected %s", format(reflect.ValueOf(expect)))
-                t.Errorf("Got      %s", format(reflect.ValueOf(ret)))
+		if params, ret, n, err := parser.Parse(md); err == nil {
+			if !reflect.DeepEqual(params, expect.P) {
+				t.Errorf("Expected %s", strings.Join(expect.P, ", "))
+				t.Errorf("Got      %s", strings.Join(params, ", "))
+			}
+			if ret != expect.R {
+				t.Errorf("Expected %s", expect.R)
+				t.Errorf("Got      %s", ret)
+			}
+			if n != len(md) {
+				t.Errorf("Consumed %d characters, but expected %d", n, len(md))
 			}
 			t.Log(" -> OK")
 		} else {
@@ -51,38 +33,12 @@ func TestParseMethodDescriptor(t *testing.T) {
 		}
 	}
 
-	ok("()V", &c.MethodDescriptor{
-		ParameterDescriptor: make([]*c.ParameterDescriptor, 0),
-		ReturnDescriptor: &c.ReturnDescriptor{
-			VoidDescriptor: &c.VoidDescriptor{"void"},
-		},
+	ok("()V", &Expect{
+		P: []string{},
+		R: "void",
 	})
-    ok("(IDLjava/lang/Thread;)Ljava/lang/Object;", &c.MethodDescriptor{
-        ParameterDescriptor: []*c.ParameterDescriptor{
-            &c.ParameterDescriptor{
-                FieldType: &c.FieldType{
-                    BaseType: &c.BaseType{"int"},
-                },
-            },
-            &c.ParameterDescriptor{
-                FieldType: &c.FieldType{
-                    BaseType: &c.BaseType{"double"},
-                },
-            },
-            &c.ParameterDescriptor{
-                FieldType: &c.FieldType{
-                    ObjectType: &c.ObjectType{
-                        ClassName: &c.ClassName{[]string{"java", "lang", "Thread"}},
-                    },
-                },
-            },
-        },
-        ReturnDescriptor: &c.ReturnDescriptor{
-            FieldType: &c.FieldType{
-                ObjectType: &c.ObjectType{
-                    ClassName: &c.ClassName{[]string{"java", "lang", "Object"}},
-                },
-            },
-        },
-    })
+	ok("(IDLjava/lang/Thread;)Ljava/lang/Object;", &Expect{
+		P: []string{"int", "double", "java.lang.Thread"},
+		R: "java.lang.Object",
+	})
 }

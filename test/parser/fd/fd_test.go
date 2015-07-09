@@ -8,10 +8,13 @@ import (
 func TestParse(t *testing.T) {
 	ok := func(fd string, expect string) {
 		t.Logf("Try to parse '%s'", fd)
-		if ret, err := fdparser.Parse(fd); err == nil {
+		if ret, n, err := fdparser.Parse(fd); err == nil {
 			if ret != expect {
 				t.Errorf("Expected %s", expect)
 				t.Errorf("Got      %s", ret)
+			}
+			if n != len(fd) {
+				t.Errorf("Consumed %d, but expects %d", n, len(fd))
 			}
 		} else {
 			t.Errorf("error: %v", err)
