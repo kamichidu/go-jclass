@@ -6,10 +6,11 @@ import (
 
 type JavaClass struct {
 	*ClassFile
+	AccessFlags
 }
 
 func NewJavaClass(classFile *ClassFile) *JavaClass {
-	return &JavaClass{classFile}
+	return &JavaClass{classFile, AccessFlag(classFile.AccessFlags)}
 }
 
 func (self *JavaClass) CanonicalName() string {
@@ -24,20 +25,8 @@ func (self *JavaClass) Name() string {
 	return strings.Replace(utf8Info.JavaString(), "/", ".", -1)
 }
 
-func (self *JavaClass) IsPublic() bool {
-	return self.AccessFlags&ACC_PUBLIC == ACC_PUBLIC
-}
-
-func (self *JavaClass) IsProtected() bool {
-	return self.AccessFlags&ACC_PROTECTED == ACC_PROTECTED
-}
-
-func (self *JavaClass) IsPrivate() bool {
-	return self.AccessFlags&ACC_PRIVATE == ACC_PRIVATE
-}
-
-func (self *JavaClass) IsFinal() bool {
-	return self.AccessFlags&ACC_FINAL == ACC_FINAL
+func (self *JavaClass) IsClass() bool {
+	return !(self.IsInterface() && self.IsEnum() && self.IsAnnotation())
 }
 
 func (self *JavaClass) Interfaces() []string {
@@ -53,5 +42,21 @@ func (self *JavaClass) Interfaces() []string {
 func (self *JavaClass) SuperClass() string {
 	classInfo := self.ConstantPool[self.ClassFile.SuperClass].(*ConstantClassInfo)
 	utf8Info := self.ConstantPool[classInfo.NameIndex].(*ConstantUtf8Info)
-	return utf8Info.JavaString()
+	return strings.Replace(utf8Info.JavaString(), "/", ".", -1)
+}
+
+func (self *JavaClass) Fields() []*JavaField {
+	fields := make([]*JavaField, 0)
+	for _, fieldInfo := range self.ClassFile.Fields {
+		fields = append(fields, NewJavaField(self.ConstantPool, fieldInfo))
+	}
+	return fields
+}
+
+func (self *JavaClass) Methods() []*JavaMethod {
+	methods := make([]*JavaMethod, 0)
+	for _, methodInfo := range self.ClassFile.Methods {
+		methods = append(methods, NewJavaMethod(self.ConstantPool, methodInfo))
+	}
+	return methods
 }
