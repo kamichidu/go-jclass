@@ -1,0 +1,4 @@
+package: github.com/kamichidu/go-jclass
+import: []
+testImport:
+- package: github.com/k0kubun/pp
