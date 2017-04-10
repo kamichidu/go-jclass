@@ -1,8 +1,9 @@
-package test
+// +build ignore
+
+package jclass
 
 import (
 	"github.com/k0kubun/pp"
-	"github.com/kamichidu/go-jclass"
 	"testing"
 )
 
