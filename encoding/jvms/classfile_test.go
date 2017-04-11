@@ -230,10 +230,10 @@ func TestParseClassFile(t *testing.T) {
 			},
 			AttributesCount: uint16(0x0001),
 			Attributes: []jvms.AttributeInfo{
-				&jvms.GenericAttributeInfo{
+				&jvms.SourceFileAttribute{
 					AttributeNameIndex_: 0x0013,
 					AttributeLength_:    0x0002,
-					Info_:               []uint8{0x0, 0x14},
+					SourceFileIndex:     0x0014,
 				},
 			},
 		}},

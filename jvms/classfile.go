@@ -422,7 +422,28 @@ func (self *SignatureAttribute) Info() []uint8 {
 }
 
 // TODO: SourceDebugExtensionAttribute
-// TODO: SourceFileAttribute
+
+type SourceFileAttribute struct {
+	AttributeNameIndex_ uint16
+	AttributeLength_    uint32
+	SourceFileIndex     uint16
+}
+
+func (self *SourceFileAttribute) AttributeNameIndex() uint16 {
+	return self.AttributeNameIndex_
+}
+
+func (self *SourceFileAttribute) AttributeLength() uint32 {
+	return self.AttributeLength_
+}
+
+func (self *SourceFileAttribute) Info() []uint8 {
+	return []uint8{
+		uint8((self.SourceFileIndex & 0xff00) >> 8),
+		uint8(self.SourceFileIndex & 0x00ff),
+	}
+}
+
 // TODO: StackMapTableAttribute
 // TODO: SyntheticAttribute
 
