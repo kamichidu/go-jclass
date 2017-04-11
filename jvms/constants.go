@@ -42,3 +42,30 @@ const (
 	CONSTANT_MethodType               = 16
 	CONSTANT_InvokeDynamic            = 18
 )
+
+// https://docs.oracle.com/javase/specs/jvms/se8/html/jvms-4.html#jvms-4.7
+const (
+	Attribute_AnnotationDefault                    = "AnnotationDefault"
+	Attribute_BootstrapMethods                     = "BootstrapMethods"
+	Attribute_Code                                 = "Code"
+	Attribute_ConstantValue                        = "ConstantValue"
+	Attribute_Deprecated                           = "Deprecated"
+	Attribute_EnclosingMethod                      = "EnclosingMethod"
+	Attribute_Exceptions                           = "Exceptions"
+	Attribute_InnerClasses                         = "InnerClasses"
+	Attribute_LineNumberTable                      = "LineNumberTable"
+	Attribute_LocalVariableTable                   = "LocalVariableTable"
+	Attribute_LocalVariableTypeTable               = "LocalVariableTypeTable"
+	Attribute_MethodParameters                     = "MethodParameters"
+	Attribute_RuntimeInvisibleAnnotations          = "RuntimeInvisibleAnnotations"
+	Attribute_RuntimeInvisibleParameterAnnotations = "RuntimeInvisibleParameterAnnotations"
+	Attribute_RuntimeInvisibleTypeAnnotations      = "RuntimeInvisibleTypeAnnotations"
+	Attribute_RuntimeVisibleAnnotations            = "RuntimeVisibleAnnotations"
+	Attribute_RuntimeVisibleParameterAnnotations   = "RuntimeVisibleParameterAnnotations"
+	Attribute_RuntimeVisibleTypeAnnotations        = "RuntimeVisibleTypeAnnotations"
+	Attribute_Signature                            = "Signature"
+	Attribute_SourceDebugExtension                 = "SourceDebugExtension"
+	Attribute_SourceFile                           = "SourceFile"
+	Attribute_StackMapTable                        = "StackMapTable"
+	Attribute_Synthetic                            = "Synthetic"
+)
