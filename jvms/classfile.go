@@ -35,7 +35,7 @@ type ClassFile struct {
 	MethodsCount      uint16
 	Methods           []*MethodInfo
 	AttributesCount   uint16
-	Attributes        []*AttributeInfo
+	Attributes        []AttributeInfo
 }
 
 // https://docs.oracle.com/javase/specs/jvms/se8/html/jvms-4.html#jvms-4.4
@@ -333,7 +333,7 @@ type FieldInfo struct {
 	NameIndex       uint16
 	DescriptorIndex uint16
 	AttributesCount uint16
-	Attributes      []*AttributeInfo
+	Attributes      []AttributeInfo
 }
 
 // https://docs.oracle.com/javase/specs/jvms/se8/html/jvms-4.html#jvms-4.6
@@ -349,7 +349,7 @@ type MethodInfo struct {
 	NameIndex       uint16
 	DescriptorIndex uint16
 	AttributesCount uint16
-	Attributes      []*AttributeInfo
+	Attributes      []AttributeInfo
 }
 
 // https://docs.oracle.com/javase/specs/jvms/se8/html/jvms-4.html#jvms-4.7
@@ -358,10 +358,52 @@ type MethodInfo struct {
 //     u4 attribute_length;
 //     u1 info[attribute_length];
 // }
-type AttributeInfo struct {
-	AttributeNameIndex uint16
-	AttributeLength    uint32
-	Info               []uint8
+type AttributeInfo interface {
+	AttributeNameIndex() uint16
+	AttributeLength() uint32
+	Info() []uint8
+}
+
+// TODO: AnnotationDefaultAttribute
+// TODO: BootstrapMethodsAttribute
+// TODO: CodeAttribute
+// TODO: ConstantValueAttribute
+// TODO: DeprecatedAttribute
+// TODO: EnclosingMethodAttribute
+// TODO: ExceptionsAttribute
+// TODO: InnerClassesAttribute
+// TODO: LineNumberTableAttribute
+// TODO: LocalVariableTableAttribute
+// TODO: LocalVariableTypeTableAttribute
+// TODO: MethodParametersAttribute
+// TODO: RuntimeInvisibleAnnotationsAttribute
+// TODO: RuntimeInvisibleParameterAnnotationsAttribute
+// TODO: RuntimeInvisibleTypeAnnotationsAttribute
+// TODO: RuntimeVisibleAnnotationsAttribute
+// TODO: RuntimeVisibleParameterAnnotationsAttribute
+// TODO: RuntimeVisibleTypeAnnotationsAttribute
+// TODO: SignatureAttribute
+// TODO: SourceDebugExtensionAttribute
+// TODO: SourceFileAttribute
+// TODO: StackMapTableAttribute
+// TODO: SyntheticAttribute
+
+type GenericAttributeInfo struct {
+	AttributeNameIndex_ uint16
+	AttributeLength_    uint32
+	Info_               []uint8
+}
+
+func (self *GenericAttributeInfo) AttributeNameIndex() uint16 {
+	return self.AttributeNameIndex_
+}
+
+func (self *GenericAttributeInfo) AttributeLength() uint32 {
+	return self.AttributeLength_
+}
+
+func (self *GenericAttributeInfo) Info() []uint8 {
+	return self.Info_
 }
 
 // Utilities

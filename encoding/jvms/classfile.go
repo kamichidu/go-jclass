@@ -49,7 +49,7 @@ func ParseClassFile(r io.Reader) (*jvms.ClassFile, error) {
 	}
 	cf.Fields = make([]*jvms.FieldInfo, cf.FieldsCount)
 	for i := uint16(0); i < cf.FieldsCount; i++ {
-		if cf.Fields[i], err = ParseFieldInfo(r); err != nil {
+		if cf.Fields[i], err = ParseFieldInfo(cf.ConstantPool, r); err != nil {
 			return nil, err
 		}
 	}
@@ -58,16 +58,16 @@ func ParseClassFile(r io.Reader) (*jvms.ClassFile, error) {
 	}
 	cf.Methods = make([]*jvms.MethodInfo, cf.MethodsCount)
 	for i := uint16(0); i < cf.MethodsCount; i++ {
-		if cf.Methods[i], err = ParseMethodInfo(r); err != nil {
+		if cf.Methods[i], err = ParseMethodInfo(cf.ConstantPool, r); err != nil {
 			return nil, err
 		}
 	}
 	if err = binary.Read(r, binary.BigEndian, &cf.AttributesCount); err != nil {
 		return nil, err
 	}
-	cf.Attributes = make([]*jvms.AttributeInfo, cf.AttributesCount)
+	cf.Attributes = make([]jvms.AttributeInfo, cf.AttributesCount)
 	for i := uint16(0); i < cf.AttributesCount; i++ {
-		if cf.Attributes[i], err = ParseAttributeInfo(r); err != nil {
+		if cf.Attributes[i], err = ParseAttributeInfo(cf.ConstantPool, r); err != nil {
 			return nil, err
 		}
 	}
@@ -195,7 +195,7 @@ func ParseConstantPool(r io.Reader) (jvms.ConstantPoolInfo, error) {
 	return cpInfo, err
 }
 
-func ParseFieldInfo(r io.Reader) (*jvms.FieldInfo, error) {
+func ParseFieldInfo(constantPool []jvms.ConstantPoolInfo, r io.Reader) (*jvms.FieldInfo, error) {
 	var err error
 	fi := new(jvms.FieldInfo)
 	for _, v := range []interface{}{&fi.AccessFlags, &fi.NameIndex, &fi.DescriptorIndex, &fi.AttributesCount} {
@@ -203,16 +203,16 @@ func ParseFieldInfo(r io.Reader) (*jvms.FieldInfo, error) {
 			return nil, err
 		}
 	}
-	fi.Attributes = make([]*jvms.AttributeInfo, fi.AttributesCount)
+	fi.Attributes = make([]jvms.AttributeInfo, fi.AttributesCount)
 	for i := uint16(0); i < fi.AttributesCount; i++ {
-		if fi.Attributes[i], err = ParseAttributeInfo(r); err != nil {
+		if fi.Attributes[i], err = ParseAttributeInfo(constantPool, r); err != nil {
 			return nil, err
 		}
 	}
 	return fi, nil
 }
 
-func ParseMethodInfo(r io.Reader) (*jvms.MethodInfo, error) {
+func ParseMethodInfo(constantPool []jvms.ConstantPoolInfo, r io.Reader) (*jvms.MethodInfo, error) {
 	var err error
 	mi := new(jvms.MethodInfo)
 	for _, v := range []interface{}{&mi.AccessFlags, &mi.NameIndex, &mi.DescriptorIndex, &mi.AttributesCount} {
@@ -220,25 +220,39 @@ func ParseMethodInfo(r io.Reader) (*jvms.MethodInfo, error) {
 			return nil, err
 		}
 	}
-	mi.Attributes = make([]*jvms.AttributeInfo, mi.AttributesCount)
+	mi.Attributes = make([]jvms.AttributeInfo, mi.AttributesCount)
 	for i := uint16(0); i < mi.AttributesCount; i++ {
-		if mi.Attributes[i], err = ParseAttributeInfo(r); err != nil {
+		if mi.Attributes[i], err = ParseAttributeInfo(constantPool, r); err != nil {
 			return nil, err
 		}
 	}
 	return mi, nil
 }
 
-func ParseAttributeInfo(r io.Reader) (*jvms.AttributeInfo, error) {
+func ParseAttributeInfo(constantPool []jvms.ConstantPoolInfo, r io.Reader) (jvms.AttributeInfo, error) {
 	var err error
-	ai := new(jvms.AttributeInfo)
-	for _, v := range []interface{}{&ai.AttributeNameIndex, &ai.AttributeLength} {
+	var (
+		attributeNameIndex uint16
+		attributeLength    uint32
+	)
+	for _, v := range []interface{}{&attributeNameIndex, &attributeLength} {
 		if err = binary.Read(r, binary.BigEndian, v); err != nil {
 			return nil, err
 		}
 	}
-	ai.Info = make([]uint8, ai.AttributeLength)
-	err = binary.Read(r, binary.BigEndian, &ai.Info)
+
+	utf8Info := constantPool[attributeNameIndex].(*jvms.ConstantUtf8Info)
+	var ai jvms.AttributeInfo
+	switch utf8Info.JavaString() {
+	default:
+		gai := &jvms.GenericAttributeInfo{
+			AttributeNameIndex_: attributeNameIndex,
+			AttributeLength_:    attributeLength,
+			Info_:               make([]uint8, attributeLength),
+		}
+		ai = gai
+		err = binary.Read(r, binary.BigEndian, &gai.Info_)
+	}
 	return ai, err
 }
 
