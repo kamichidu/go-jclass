@@ -5,12 +5,12 @@ import (
 	"fmt"
 	"io"
 
-	"github.com/kamichidu/go-jclass"
+	"github.com/kamichidu/go-jclass/jvms"
 )
 
-func ParseClassFile(r io.Reader) (*jclass.ClassFile, error) {
+func ParseClassFile(r io.Reader) (*jvms.ClassFile, error) {
 	var err error
-	cf := new(jclass.ClassFile)
+	cf := new(jvms.ClassFile)
 	for _, v := range []interface{}{&cf.Magic, &cf.MinorVersion, &cf.MajorVersion, &cf.ConstantPoolCount} {
 		if err = binary.Read(r, binary.BigEndian, v); err != nil {
 			return nil, err
@@ -20,7 +20,7 @@ func ParseClassFile(r io.Reader) (*jclass.ClassFile, error) {
 		return nil, fmt.Errorf("Illegal magic binary: %v", cf.Magic)
 	}
 	// Constant pool starts with index 1
-	cf.ConstantPool = make([]jclass.ConstantPoolInfo, cf.ConstantPoolCount)
+	cf.ConstantPool = make([]jvms.ConstantPoolInfo, cf.ConstantPoolCount)
 	for i := uint16(1); i < cf.ConstantPoolCount; i++ {
 		cpInfo, err := ParseConstantPool(r)
 		if err != nil {
@@ -30,7 +30,7 @@ func ParseClassFile(r io.Reader) (*jclass.ClassFile, error) {
 
 		// Some cp_info consumes double indices
 		switch cpInfo.Tag() {
-		case jclass.CONSTANT_Long, jclass.CONSTANT_Double:
+		case jvms.CONSTANT_Long, jvms.CONSTANT_Double:
 			i++
 			cf.ConstantPool[i] = cpInfo
 		}
@@ -47,7 +47,7 @@ func ParseClassFile(r io.Reader) (*jclass.ClassFile, error) {
 	if err = binary.Read(r, binary.BigEndian, &cf.FieldsCount); err != nil {
 		return nil, err
 	}
-	cf.Fields = make([]*jclass.FieldInfo, cf.FieldsCount)
+	cf.Fields = make([]*jvms.FieldInfo, cf.FieldsCount)
 	for i := uint16(0); i < cf.FieldsCount; i++ {
 		if cf.Fields[i], err = ParseFieldInfo(r); err != nil {
 			return nil, err
@@ -56,7 +56,7 @@ func ParseClassFile(r io.Reader) (*jclass.ClassFile, error) {
 	if err = binary.Read(r, binary.BigEndian, &cf.MethodsCount); err != nil {
 		return nil, err
 	}
-	cf.Methods = make([]*jclass.MethodInfo, cf.MethodsCount)
+	cf.Methods = make([]*jvms.MethodInfo, cf.MethodsCount)
 	for i := uint16(0); i < cf.MethodsCount; i++ {
 		if cf.Methods[i], err = ParseMethodInfo(r); err != nil {
 			return nil, err
@@ -65,7 +65,7 @@ func ParseClassFile(r io.Reader) (*jclass.ClassFile, error) {
 	if err = binary.Read(r, binary.BigEndian, &cf.AttributesCount); err != nil {
 		return nil, err
 	}
-	cf.Attributes = make([]*jclass.AttributeInfo, cf.AttributesCount)
+	cf.Attributes = make([]*jvms.AttributeInfo, cf.AttributesCount)
 	for i := uint16(0); i < cf.AttributesCount; i++ {
 		if cf.Attributes[i], err = ParseAttributeInfo(r); err != nil {
 			return nil, err
@@ -74,7 +74,7 @@ func ParseClassFile(r io.Reader) (*jclass.ClassFile, error) {
 	return cf, nil
 }
 
-func ParseConstantPool(r io.Reader) (jclass.ConstantPoolInfo, error) {
+func ParseConstantPool(r io.Reader) (jvms.ConstantPoolInfo, error) {
 	var (
 		tag uint8
 		err error
@@ -84,98 +84,98 @@ func ParseConstantPool(r io.Reader) (jclass.ConstantPoolInfo, error) {
 	}
 
 	var (
-		cpInfo jclass.ConstantPoolInfo
+		cpInfo jvms.ConstantPoolInfo
 		data   []interface{}
 	)
 	switch tag {
-	case jclass.CONSTANT_Class:
-		info := new(jclass.ConstantClassInfo)
+	case jvms.CONSTANT_Class:
+		info := new(jvms.ConstantClassInfo)
 		data = []interface{}{
 			&info.NameIndex,
 		}
 		cpInfo = info
-	case jclass.CONSTANT_Fieldref:
-		info := new(jclass.ConstantFieldrefInfo)
+	case jvms.CONSTANT_Fieldref:
+		info := new(jvms.ConstantFieldrefInfo)
 		data = []interface{}{
 			&info.ClassIndex,
 			&info.NameAndTypeIndex,
 		}
 		cpInfo = info
-	case jclass.CONSTANT_Methodref:
-		info := new(jclass.ConstantMethodrefInfo)
+	case jvms.CONSTANT_Methodref:
+		info := new(jvms.ConstantMethodrefInfo)
 		data = []interface{}{
 			&info.ClassIndex,
 			&info.NameAndTypeIndex,
 		}
 		cpInfo = info
-	case jclass.CONSTANT_InterfaceMethodref:
-		info := new(jclass.ConstantInterfaceMethodrefInfo)
+	case jvms.CONSTANT_InterfaceMethodref:
+		info := new(jvms.ConstantInterfaceMethodrefInfo)
 		data = []interface{}{
 			&info.ClassIndex,
 			&info.NameAndTypeIndex,
 		}
 		cpInfo = info
-	case jclass.CONSTANT_String:
-		info := new(jclass.ConstantStringInfo)
+	case jvms.CONSTANT_String:
+		info := new(jvms.ConstantStringInfo)
 		data = []interface{}{
 			&info.StringIndex,
 		}
 		cpInfo = info
-	case jclass.CONSTANT_Integer:
-		info := new(jclass.ConstantIntegerInfo)
+	case jvms.CONSTANT_Integer:
+		info := new(jvms.ConstantIntegerInfo)
 		data = []interface{}{
 			&info.Bytes,
 		}
 		cpInfo = info
-	case jclass.CONSTANT_Float:
-		info := new(jclass.ConstantFloatInfo)
+	case jvms.CONSTANT_Float:
+		info := new(jvms.ConstantFloatInfo)
 		data = []interface{}{
 			&info.Bytes,
 		}
 		cpInfo = info
-	case jclass.CONSTANT_Long:
-		info := new(jclass.ConstantLongInfo)
+	case jvms.CONSTANT_Long:
+		info := new(jvms.ConstantLongInfo)
 		data = []interface{}{
 			&info.HighBytes,
 			&info.LowBytes,
 		}
 		cpInfo = info
-	case jclass.CONSTANT_Double:
-		info := new(jclass.ConstantDoubleInfo)
+	case jvms.CONSTANT_Double:
+		info := new(jvms.ConstantDoubleInfo)
 		data = []interface{}{
 			&info.HighBytes,
 			&info.LowBytes,
 		}
 		cpInfo = info
-	case jclass.CONSTANT_NameAndType:
-		info := new(jclass.ConstantNameAndTypeInfo)
+	case jvms.CONSTANT_NameAndType:
+		info := new(jvms.ConstantNameAndTypeInfo)
 		data = []interface{}{
 			&info.NameIndex,
 			&info.DescriptorIndex,
 		}
 		cpInfo = info
-	case jclass.CONSTANT_MethodHandle:
-		info := new(jclass.ConstantMethodHandleInfo)
+	case jvms.CONSTANT_MethodHandle:
+		info := new(jvms.ConstantMethodHandleInfo)
 		data = []interface{}{
 			&info.ReferenceKind,
 			&info.ReferenceIndex,
 		}
 		cpInfo = info
-	case jclass.CONSTANT_MethodType:
-		info := new(jclass.ConstantMethodTypeInfo)
+	case jvms.CONSTANT_MethodType:
+		info := new(jvms.ConstantMethodTypeInfo)
 		data = []interface{}{
 			&info.DescriptorIndex,
 		}
 		cpInfo = info
-	case jclass.CONSTANT_InvokeDynamic:
-		info := new(jclass.ConstantInvokeDynamicInfo)
+	case jvms.CONSTANT_InvokeDynamic:
+		info := new(jvms.ConstantInvokeDynamicInfo)
 		data = []interface{}{
 			&info.BootstrapMethodAttrIndex,
 			&info.NameAndTypeIndex,
 		}
 		cpInfo = info
-	case jclass.CONSTANT_Utf8:
-		info := new(jclass.ConstantUtf8Info)
+	case jvms.CONSTANT_Utf8:
+		info := new(jvms.ConstantUtf8Info)
 		if info.Length, err = u2(r); err != nil {
 			return nil, err
 		}
@@ -195,15 +195,15 @@ func ParseConstantPool(r io.Reader) (jclass.ConstantPoolInfo, error) {
 	return cpInfo, err
 }
 
-func ParseFieldInfo(r io.Reader) (*jclass.FieldInfo, error) {
+func ParseFieldInfo(r io.Reader) (*jvms.FieldInfo, error) {
 	var err error
-	fi := new(jclass.FieldInfo)
+	fi := new(jvms.FieldInfo)
 	for _, v := range []interface{}{&fi.AccessFlags, &fi.NameIndex, &fi.DescriptorIndex, &fi.AttributesCount} {
 		if err = binary.Read(r, binary.BigEndian, v); err != nil {
 			return nil, err
 		}
 	}
-	fi.Attributes = make([]*jclass.AttributeInfo, fi.AttributesCount)
+	fi.Attributes = make([]*jvms.AttributeInfo, fi.AttributesCount)
 	for i := uint16(0); i < fi.AttributesCount; i++ {
 		if fi.Attributes[i], err = ParseAttributeInfo(r); err != nil {
 			return nil, err
@@ -212,15 +212,15 @@ func ParseFieldInfo(r io.Reader) (*jclass.FieldInfo, error) {
 	return fi, nil
 }
 
-func ParseMethodInfo(r io.Reader) (*jclass.MethodInfo, error) {
+func ParseMethodInfo(r io.Reader) (*jvms.MethodInfo, error) {
 	var err error
-	mi := new(jclass.MethodInfo)
+	mi := new(jvms.MethodInfo)
 	for _, v := range []interface{}{&mi.AccessFlags, &mi.NameIndex, &mi.DescriptorIndex, &mi.AttributesCount} {
 		if err = binary.Read(r, binary.BigEndian, v); err != nil {
 			return nil, err
 		}
 	}
-	mi.Attributes = make([]*jclass.AttributeInfo, mi.AttributesCount)
+	mi.Attributes = make([]*jvms.AttributeInfo, mi.AttributesCount)
 	for i := uint16(0); i < mi.AttributesCount; i++ {
 		if mi.Attributes[i], err = ParseAttributeInfo(r); err != nil {
 			return nil, err
@@ -229,9 +229,9 @@ func ParseMethodInfo(r io.Reader) (*jclass.MethodInfo, error) {
 	return mi, nil
 }
 
-func ParseAttributeInfo(r io.Reader) (*jclass.AttributeInfo, error) {
+func ParseAttributeInfo(r io.Reader) (*jvms.AttributeInfo, error) {
 	var err error
-	ai := new(jclass.AttributeInfo)
+	ai := new(jvms.AttributeInfo)
 	for _, v := range []interface{}{&ai.AttributeNameIndex, &ai.AttributeLength} {
 		if err = binary.Read(r, binary.BigEndian, v); err != nil {
 			return nil, err

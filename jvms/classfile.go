@@ -1,4 +1,4 @@
-package jclass
+package jvms
 
 // https://docs.oracle.com/javase/specs/jvms/se8/html/jvms-4.html#jvms-4.1
 // ClassFile {

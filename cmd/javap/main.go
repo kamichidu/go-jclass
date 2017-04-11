@@ -13,9 +13,9 @@ import (
 
 const javapTemplateText = `Compiled from "???"
 {{typeNamePrefix .}} {{.CanonicalName}}{{superclass .}}{{superinterfaces .}} {
-{{range $field := .Fields}}  {{$field.Name}}
+{{range $field := .Fields}}  {{$field.Type}} {{$field.Name}};
 {{end}}
-{{range $method := .Methods}}  {{$method.ReturnType}} {{$method.Name}}
+{{range $method := .Methods}}  {{methodPrefix $method}}{{$method.ReturnType}} {{$method.Name}}({{join $method.ParameterTypes ", "}});
 {{end}}
 }
 `
@@ -24,6 +24,27 @@ var javapTemplate *template.Template
 
 func init() {
 	funcs := make(template.FuncMap)
+	funcs["methodPrefix"] = func(flags jclass.AccessFlags) string {
+		mods := make([]string, 0)
+		if flags.IsPublic() {
+			mods = append(mods, "public")
+		} else if flags.IsProtected() {
+			mods = append(mods, "protected")
+		} else if flags.IsPrivate() {
+			mods = append(mods, "private")
+		}
+		if flags.IsStatic() {
+			mods = append(mods, "static")
+		}
+		if flags.IsFinal() {
+			mods = append(mods, "final")
+		}
+		if len(mods) > 0 {
+			return strings.Join(mods, " ") + " "
+		} else {
+			return strings.Join(mods, " ")
+		}
+	}
 	funcs["typeNamePrefix"] = func(class *jclass.JavaClass) string {
 		mods := make([]string, 0)
 		if class.IsPublic() {
@@ -67,6 +88,7 @@ func init() {
 		}
 		return " implements " + strings.Join(implements, ", ")
 	}
+	funcs["join"] = strings.Join
 	javapTemplate = template.Must(template.New("javap").Funcs(funcs).Parse(javapTemplateText))
 }
 

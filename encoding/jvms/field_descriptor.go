@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"fmt"
 	"io"
+	"strings"
 )
 
 // https://docs.oracle.com/javase/specs/jvms/se7/html/jvms-4.html#jvms-4.3.2
@@ -39,6 +40,10 @@ type FieldDescriptorInfo struct {
 	PrimitiveType bool
 	ArrayType     bool
 	ArrayDepth    int
+}
+
+func (self *FieldDescriptorInfo) String() string {
+	return self.TypeName + strings.Repeat("[]", self.ArrayDepth)
 }
 
 func ParseFieldDescriptor(r io.Reader) (*FieldDescriptorInfo, error) {
