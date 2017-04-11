@@ -415,10 +415,7 @@ func (self *SignatureAttribute) AttributeLength() uint32 {
 }
 
 func (self *SignatureAttribute) Info() []uint8 {
-	return []uint8{
-		uint8((self.SignatureIndex & 0xff00) >> 8),
-		uint8(self.SignatureIndex & 0x00ff),
-	}
+	return u16_u8slice(self.SignatureIndex)
 }
 
 // TODO: SourceDebugExtensionAttribute
@@ -438,10 +435,7 @@ func (self *SourceFileAttribute) AttributeLength() uint32 {
 }
 
 func (self *SourceFileAttribute) Info() []uint8 {
-	return []uint8{
-		uint8((self.SourceFileIndex & 0xff00) >> 8),
-		uint8(self.SourceFileIndex & 0x00ff),
-	}
+	return u16_u8slice(self.SourceFileIndex)
 }
 
 // TODO: StackMapTableAttribute
