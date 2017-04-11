@@ -250,6 +250,13 @@ func ParseAttributeInfo(constantPool []jvms.ConstantPoolInfo, r io.Reader) (jvms
 			AttributeLength_:    attributeLength,
 		}
 		err = nil
+	case jvms.Attribute_Signature:
+		sig := &jvms.SignatureAttribute{
+			AttributeNameIndex_: attributeNameIndex,
+			AttributeLength_:    attributeLength,
+		}
+		ai = sig
+		err = binary.Read(r, binary.BigEndian, &sig.SignatureIndex)
 	default:
 		gai := &jvms.GenericAttributeInfo{
 			AttributeNameIndex_: attributeNameIndex,

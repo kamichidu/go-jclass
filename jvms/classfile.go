@@ -399,7 +399,28 @@ func (self *DeprecatedAttribute) Info() []uint8 {
 // TODO: RuntimeVisibleAnnotationsAttribute
 // TODO: RuntimeVisibleParameterAnnotationsAttribute
 // TODO: RuntimeVisibleTypeAnnotationsAttribute
-// TODO: SignatureAttribute
+
+type SignatureAttribute struct {
+	AttributeNameIndex_ uint16
+	AttributeLength_    uint32
+	SignatureIndex      uint16
+}
+
+func (self *SignatureAttribute) AttributeNameIndex() uint16 {
+	return self.AttributeNameIndex_
+}
+
+func (self *SignatureAttribute) AttributeLength() uint32 {
+	return self.AttributeLength_
+}
+
+func (self *SignatureAttribute) Info() []uint8 {
+	return []uint8{
+		uint8((self.SignatureIndex & 0xff00) >> 8),
+		uint8(self.SignatureIndex & 0x00ff),
+	}
+}
+
 // TODO: SourceDebugExtensionAttribute
 // TODO: SourceFileAttribute
 // TODO: StackMapTableAttribute
