@@ -1,14 +1,10 @@
-hash: d5f82a52f1fd834081f072c1c3ad26bb81863a8a4b2267bc10265bdd11ea04a3
-updated: 2017-04-10T13:43:50.0163634+09:00
+hash: 567f9a099af1925ccdd2d6a223eb2f38083aa21232ca9122162fb657f2cd90b4
+updated: 2017-04-11T18:50:07.931282+09:00
 imports: []
 testImports:
 - name: github.com/k0kubun/pp
   version: d1532fc5d94ecdf2da29e24d7b99721f3287de4a
-- name: github.com/mattn/go-colorable
-  version: ded68f7a9561c023e790de24279db7ebf473ea80
-- name: github.com/mattn/go-isatty
-  version: fc9e8d8ef48496124e79ae0df75490096eccf6fe
-- name: golang.org/x/sys
-  version: f3918c30c5c2cb527c0b071a27c35120a6c0719a
-  subpackages:
-  - unix
+- name: github.com/kr/pretty
+  version: cfb55aafdaf3ec08f0db22699ab822c50091b1c4
+- name: github.com/kr/text
+  version: 7cafcd837844e784b526369c9bce262804aebc60
