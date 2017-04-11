@@ -47,7 +47,7 @@ func TestParseFieldDescriptor(t *testing.T) {
 	ok("[[Ljava/lang/Object;", &FieldDescriptorInfo{"java.lang.Object", false, true, 2})
 }
 
-func BenchmarkParseFileDescriptor(b *testing.B) {
+func BenchmarkParseFieldDescriptor(b *testing.B) {
 	for i := 0; i < b.N; i++ {
 		ParseFieldDescriptor(strings.NewReader("[[[[[[Ljava/util/List;"))
 	}
