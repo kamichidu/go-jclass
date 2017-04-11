@@ -244,6 +244,12 @@ func ParseAttributeInfo(constantPool []jvms.ConstantPoolInfo, r io.Reader) (jvms
 	utf8Info := constantPool[attributeNameIndex].(*jvms.ConstantUtf8Info)
 	var ai jvms.AttributeInfo
 	switch utf8Info.JavaString() {
+	case jvms.Attribute_Deprecated:
+		ai = &jvms.DeprecatedAttribute{
+			AttributeNameIndex_: attributeNameIndex,
+			AttributeLength_:    attributeLength,
+		}
+		err = nil
 	default:
 		gai := &jvms.GenericAttributeInfo{
 			AttributeNameIndex_: attributeNameIndex,

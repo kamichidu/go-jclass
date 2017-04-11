@@ -368,7 +368,24 @@ type AttributeInfo interface {
 // TODO: BootstrapMethodsAttribute
 // TODO: CodeAttribute
 // TODO: ConstantValueAttribute
-// TODO: DeprecatedAttribute
+
+type DeprecatedAttribute struct {
+	AttributeNameIndex_ uint16
+	AttributeLength_    uint32
+}
+
+func (self *DeprecatedAttribute) AttributeNameIndex() uint16 {
+	return self.AttributeNameIndex_
+}
+
+func (self *DeprecatedAttribute) AttributeLength() uint32 {
+	return self.AttributeLength_
+}
+
+func (self *DeprecatedAttribute) Info() []uint8 {
+	return []uint8{}
+}
+
 // TODO: EnclosingMethodAttribute
 // TODO: ExceptionsAttribute
 // TODO: InnerClassesAttribute
