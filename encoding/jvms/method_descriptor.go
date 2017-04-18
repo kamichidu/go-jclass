@@ -7,18 +7,6 @@ import (
 )
 
 // https://docs.oracle.com/javase/specs/jvms/se7/html/jvms-4.html#jvms-4.3.3
-// MethodDescriptor:
-//   "(" ParameterDescriptor* ")" ReturnDescriptor
-//
-// ParameterDescriptor:
-//   FieldType
-//
-// ReturnDescriptor:
-//   FieldType
-// 	   VoidDescriptor
-//
-// VoidDescriptor:
-//   "V"
 
 type MethodDescriptorInfo struct {
 	ReturnTypeInfo    *FieldDescriptorInfo
@@ -26,12 +14,35 @@ type MethodDescriptorInfo struct {
 }
 
 func ParseMethodDescriptor(r io.Reader) (*MethodDescriptorInfo, error) {
+	ast := new(astMethodDescriptor)
+	if err := methodDescriptor(ast, bufio.NewReader(r)); err != nil {
+		return nil, err
+	}
 	info := new(MethodDescriptorInfo)
-	err := methodDescriptor(info, bufio.NewReader(r))
-	return info, err
+	info.ParameterTypeInfo = make([]*FieldDescriptorInfo, 0)
+	if ast.ParameterDescriptor != nil {
+		for _, ast := range ast.ParameterDescriptor {
+			info.ParameterTypeInfo = append(info.ParameterTypeInfo, toFieldDescriptorInfo(ast.FieldType))
+		}
+	}
+	if ast.ReturnDescriptor.FieldType != nil {
+		info.ReturnTypeInfo = toFieldDescriptorInfo(ast.ReturnDescriptor.FieldType)
+	} else {
+		info.ReturnTypeInfo = &FieldDescriptorInfo{
+			PrimitiveType: true,
+			TypeName:      "void",
+		}
+	}
+	return info, nil
 }
 
-func methodDescriptor(out *MethodDescriptorInfo, r *bufio.Reader) error {
+type astMethodDescriptor struct {
+	ParameterDescriptor []*astParameterDescriptor
+	ReturnDescriptor    *astReturnDescriptor
+}
+
+// "(" ParameterDescriptor* ")" ReturnDescriptor
+func methodDescriptor(out *astMethodDescriptor, r runeReader) error {
 	c, _, err := r.ReadRune()
 	if err != nil {
 		return err
@@ -39,7 +50,6 @@ func methodDescriptor(out *MethodDescriptorInfo, r *bufio.Reader) error {
 		return fmt.Errorf("MethodDescriptor must starts with `(', but starts with `%c'", err)
 	}
 
-	out.ParameterTypeInfo = make([]*FieldDescriptorInfo, 0)
 	for {
 		c, _, err = r.ReadRune()
 		if err != nil {
@@ -51,11 +61,11 @@ func methodDescriptor(out *MethodDescriptorInfo, r *bufio.Reader) error {
 		if c == ')' {
 			break
 		}
-		paramInfo := new(FieldDescriptorInfo)
-		if err = parameterDescriptor(paramInfo, r); err != nil {
+		child := new(astParameterDescriptor)
+		if err = parameterDescriptor(child, r); err != nil {
 			return err
 		}
-		out.ParameterTypeInfo = append(out.ParameterTypeInfo, paramInfo)
+		out.ParameterDescriptor = append(out.ParameterDescriptor, child)
 	}
 
 	c, _, err = r.ReadRune()
@@ -65,15 +75,28 @@ func methodDescriptor(out *MethodDescriptorInfo, r *bufio.Reader) error {
 		return fmt.Errorf("MethodDescriptor must indicates with `)', but with `%c'", err)
 	}
 
-	out.ReturnTypeInfo = new(FieldDescriptorInfo)
-	return returnDescriptor(out.ReturnTypeInfo, r)
+	out.ReturnDescriptor = new(astReturnDescriptor)
+	return returnDescriptor(out.ReturnDescriptor, r)
 }
 
-func parameterDescriptor(out *FieldDescriptorInfo, r *bufio.Reader) error {
-	return fieldType(out, r)
+type astParameterDescriptor struct {
+	FieldType *astFieldType
 }
 
-func returnDescriptor(out *FieldDescriptorInfo, r *bufio.Reader) error {
+// FieldType
+func parameterDescriptor(out *astParameterDescriptor, r runeReader) error {
+	out.FieldType = new(astFieldType)
+	return fieldType(out.FieldType, r)
+}
+
+type astReturnDescriptor struct {
+	FieldType      *astFieldType
+	VoidDescriptor *astVoidDescriptor
+}
+
+// FieldType
+// VoidDescriptor
+func returnDescriptor(out *astReturnDescriptor, r runeReader) error {
 	c, _, err := r.ReadRune()
 	if err != nil {
 		return err
@@ -83,22 +106,28 @@ func returnDescriptor(out *FieldDescriptorInfo, r *bufio.Reader) error {
 	}
 	switch c {
 	case 'B', 'C', 'D', 'F', 'I', 'J', 'S', 'Z', 'L', '[':
-		return fieldType(out, r)
+		out.FieldType = new(astFieldType)
+		return fieldType(out.FieldType, r)
 	case 'V':
-		return voidDescriptor(out, r)
+		out.VoidDescriptor = new(astVoidDescriptor)
+		return voidDescriptor(out.VoidDescriptor, r)
 	default:
 		return fmt.Errorf("ReturnDescriptor must be FieldType or VoidDescriptor, but unknown prefix `%c' found", c)
 	}
 }
 
-func voidDescriptor(out *FieldDescriptorInfo, r *bufio.Reader) error {
+type astVoidDescriptor struct {
+	Token string
+}
+
+// "V"
+func voidDescriptor(out *astVoidDescriptor, r runeReader) error {
 	c, _, err := r.ReadRune()
 	if err != nil {
 		return err
 	} else if c != 'V' {
 		return fmt.Errorf("VoidDescriptor must be `V', but is `%c'", c)
 	}
-	out.TypeName = "void"
-	out.PrimitiveType = true
+	out.Token = "V"
 	return nil
 }

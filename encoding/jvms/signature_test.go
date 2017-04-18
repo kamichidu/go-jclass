@@ -1,6 +1,8 @@
 package jvms
 
 import (
+	_ "github.com/kr/pretty"
+	_ "reflect"
 	"strings"
 	"testing"
 )
@@ -9,6 +11,7 @@ func TestParseClassSignature(t *testing.T) {
 	cases := []struct {
 		S string
 	}{
+		{S: "Ljava/lang/Object;"},
 		{S: "<E:Ljava/lang/Object;>Ljava/util/AbstractList<TE;>;Ljava/util/List<TE;>;Ljava/util/RandomAccess;Ljava/lang/Cloneable;Ljava/io/Serializable;"},
 	}
 	for _, c := range cases {
@@ -22,7 +25,7 @@ func TestParseFieldTypeSignature(t *testing.T) {
 	cases := []struct {
 		S string
 	}{
-		{S: ""},
+	// {S: ""},
 	}
 	for _, c := range cases {
 		if err := ParseFieldTypeSignature(strings.NewReader(c.S)); err != nil {
@@ -35,7 +38,7 @@ func TestParseMethodTypeSignature(t *testing.T) {
 	cases := []struct {
 		S string
 	}{
-		{S: ""},
+	// {S: ""},
 	}
 	for _, c := range cases {
 		if err := ParseMethodTypeSignature(strings.NewReader(c.S)); err != nil {

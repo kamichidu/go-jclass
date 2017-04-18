@@ -8,32 +8,6 @@ import (
 )
 
 // https://docs.oracle.com/javase/specs/jvms/se7/html/jvms-4.html#jvms-4.3.2
-// FieldDescriptor:
-//   FieldType
-//
-// FieldType:
-//   BaseType
-//   ObjectType
-//   ArrayType
-//
-// BaseType:
-//   "B"
-//   "C"
-//   "D"
-//   "F"
-//   "I"
-//   "J"
-//   "S"
-//   "Z"
-//
-// ObjectType:
-//   "L" ClassName ";"
-//
-// ArrayType:
-//   "[" ComponentType
-//
-// ComponentType:
-//   FieldType
 
 type FieldDescriptorInfo struct {
 	TypeName      string
@@ -47,16 +21,65 @@ func (self *FieldDescriptorInfo) String() string {
 }
 
 func ParseFieldDescriptor(r io.Reader) (*FieldDescriptorInfo, error) {
+	ast := new(astFieldDescriptor)
+	if err := fieldDescriptor(ast, bufio.NewReader(r)); err != nil {
+		return nil, err
+	}
+	return toFieldDescriptorInfo(ast.FieldType), nil
+}
+
+func toFieldDescriptorInfo(ast *astFieldType) *FieldDescriptorInfo {
 	info := new(FieldDescriptorInfo)
-	err := fieldDescriptor(info, bufio.NewReader(r))
-	return info, err
+	switch {
+	case ast.BaseType != nil:
+		info.PrimitiveType = true
+		info.TypeName = baseType2TypeName(ast.BaseType.Token)
+	case ast.ObjectType != nil:
+		info.TypeName = ast.ObjectType.ClassName.Token
+	case ast.ArrayType != nil:
+		info.ArrayType = true
+		info.ArrayDepth = 1
+		curr := ast.ArrayType.ComponentType
+		for curr != nil {
+			switch {
+			case curr.FieldType.ArrayType != nil:
+				info.ArrayDepth++
+				curr = curr.FieldType.ArrayType.ComponentType
+			case curr.FieldType.BaseType != nil:
+				info.PrimitiveType = true
+				info.TypeName = baseType2TypeName(curr.FieldType.BaseType.Token)
+				curr = nil
+			case curr.FieldType.ObjectType != nil:
+				info.TypeName = curr.FieldType.ObjectType.ClassName.Token
+				curr = nil
+			default:
+				curr = nil
+			}
+		}
+	}
+	return info
 }
 
-func fieldDescriptor(out *FieldDescriptorInfo, r *bufio.Reader) error {
-	return fieldType(out, r)
+type astFieldDescriptor struct {
+	FieldType *astFieldType
 }
 
-func fieldType(out *FieldDescriptorInfo, r *bufio.Reader) error {
+// FieldType
+func fieldDescriptor(out *astFieldDescriptor, r runeReader) error {
+	out.FieldType = new(astFieldType)
+	return fieldType(out.FieldType, r)
+}
+
+type astFieldType struct {
+	BaseType   *astBaseType
+	ObjectType *astObjectType
+	ArrayType  *astArrayType
+}
+
+// BaseType
+// ObjectType
+// ArrayType
+func fieldType(out *astFieldType, r runeReader) error {
 	c, _, err := r.ReadRune()
 	if err != nil {
 		return err
@@ -67,60 +90,76 @@ func fieldType(out *FieldDescriptorInfo, r *bufio.Reader) error {
 
 	switch c {
 	case 'B', 'C', 'D', 'F', 'I', 'J', 'S', 'Z':
-		return baseType(out, r)
+		out.BaseType = new(astBaseType)
+		return baseType(out.BaseType, r)
 	case 'L':
-		return objectType(out, r)
+		out.ObjectType = new(astObjectType)
+		return objectType(out.ObjectType, r)
 	case '[':
-		return arrayType(out, r)
+		out.ArrayType = new(astArrayType)
+		return arrayType(out.ArrayType, r)
 	default:
 		return fmt.Errorf("FieldType must be BaseType, ObjectType or ArrayType, but unknown prefix `%c' found", c)
 	}
 }
 
-func baseType(out *FieldDescriptorInfo, r *bufio.Reader) error {
+type astBaseType struct {
+	Token string
+}
+
+// "B"
+// "C"
+// "D"
+// "F"
+// "I"
+// "J"
+// "S"
+// "Z"
+func baseType(out *astBaseType, r runeReader) error {
 	c, _, err := r.ReadRune()
 	if err != nil {
 		return err
 	}
 	switch c {
 	case 'B':
-		out.TypeName = "byte"
-		out.PrimitiveType = true
+		out.Token = "B"
 		return nil
 	case 'C':
-		out.TypeName = "char"
-		out.PrimitiveType = true
+		out.Token = "C"
 		return nil
 	case 'D':
-		out.TypeName = "double"
-		out.PrimitiveType = true
+		out.Token = "D"
 		return nil
 	case 'F':
-		out.TypeName = "float"
-		out.PrimitiveType = true
+		out.Token = "F"
 		return nil
 	case 'I':
-		out.TypeName = "int"
-		out.PrimitiveType = true
+		out.Token = "I"
 		return nil
 	case 'J':
-		out.TypeName = "long"
-		out.PrimitiveType = true
+		out.Token = "J"
 		return nil
 	case 'S':
-		out.TypeName = "short"
-		out.PrimitiveType = true
+		out.Token = "S"
 		return nil
 	case 'Z':
-		out.TypeName = "boolean"
-		out.PrimitiveType = true
+		out.Token = "Z"
 		return nil
 	default:
 		return fmt.Errorf("BaseType must be `B', `C', `D', `F', `I', `J', `S' or `Z', but is `%c'", c)
 	}
 }
 
-func objectType(out *FieldDescriptorInfo, r *bufio.Reader) error {
+type astObjectType struct {
+	ClassName *astClassName
+}
+
+type astClassName struct {
+	Token string
+}
+
+// "L" ClassName ";"
+func objectType(out *astObjectType, r runeReader) error {
 	c, _, err := r.ReadRune()
 	if err != nil {
 		return err
@@ -145,7 +184,8 @@ func objectType(out *FieldDescriptorInfo, r *bufio.Reader) error {
 		}
 		chars = append(chars, c)
 	}
-	out.TypeName = string(chars)
+	out.ClassName = new(astClassName)
+	out.ClassName.Token = string(chars)
 
 	c, _, err = r.ReadRune()
 	if err != nil {
@@ -156,18 +196,29 @@ func objectType(out *FieldDescriptorInfo, r *bufio.Reader) error {
 	return nil
 }
 
-func arrayType(out *FieldDescriptorInfo, r *bufio.Reader) error {
+type astArrayType struct {
+	ComponentType *astComponentType
+}
+
+// "[" ComponentType
+func arrayType(out *astArrayType, r runeReader) error {
 	c, _, err := r.ReadRune()
 	if err != nil {
 		return err
 	} else if c != '[' {
 		return fmt.Errorf("ArrayType must start with `[', but starts with `%c'", c)
 	}
-	out.ArrayType = true
-	out.ArrayDepth++
-	return componentType(out, r)
+
+	out.ComponentType = new(astComponentType)
+	return componentType(out.ComponentType, r)
 }
 
-func componentType(out *FieldDescriptorInfo, r *bufio.Reader) error {
-	return fieldType(out, r)
+type astComponentType struct {
+	FieldType *astFieldType
+}
+
+// FieldType
+func componentType(out *astComponentType, r runeReader) error {
+	out.FieldType = new(astFieldType)
+	return fieldType(out.FieldType, r)
 }
