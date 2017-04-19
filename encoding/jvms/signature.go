@@ -155,7 +155,7 @@ func formalTypeParameter(out *astFormalTypeParameter, r runeReader) error {
 }
 
 type astIdentifier struct {
-	Text string
+	Token string
 }
 
 func identifier(out *astIdentifier, r runeReader) error {
@@ -183,7 +183,7 @@ loop:
 			break loop
 		}
 	}
-	out.Text = string(ident)
+	out.Token = string(ident)
 	return nil
 }
 
