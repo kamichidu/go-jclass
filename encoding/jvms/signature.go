@@ -173,7 +173,7 @@ loop:
 			fallthrough
 		case c >= '0' && c <= '9':
 			fallthrough
-		case c == '_':
+		case c == '_', c == '$':
 			c, _, err = r.ReadRune()
 			if err != nil {
 				return err
