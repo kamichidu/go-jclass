@@ -41,7 +41,10 @@ func (self *JavaClass) Interfaces() []string {
 }
 
 func (self *JavaClass) SuperClass() string {
-	classInfo := self.ConstantPool[self.ClassFile.SuperClass].(*jvms.ConstantClassInfo)
+	classInfo, ok := self.ConstantPool[self.ClassFile.SuperClass].(*jvms.ConstantClassInfo)
+	if !ok {
+		return ""
+	}
 	utf8Info := self.ConstantPool[classInfo.NameIndex].(*jvms.ConstantUtf8Info)
 	return strings.Replace(utf8Info.JavaString(), "/", ".", -1)
 }
