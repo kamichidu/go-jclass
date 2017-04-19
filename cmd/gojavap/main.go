@@ -3,93 +3,70 @@ package main
 import (
 	"flag"
 	"fmt"
+	"io"
 	"os"
 	"strings"
-	"text/template"
 
 	"github.com/kamichidu/go-jclass"
 	"github.com/kamichidu/go-jclass/encoding/jvms"
 )
 
-const javapTemplateText = `Compiled from "???"
-{{typeNamePrefix .}} {{.CanonicalName}}{{superclass .}}{{superinterfaces .}} {
-{{range $field := .Fields}}  {{$field.Type}} {{$field.Name}};
-{{end}}
-{{range $method := .Methods}}  {{methodPrefix $method}}{{$method.ReturnType}} {{$method.Name}}({{join $method.ParameterTypes ", "}});
-{{end}}
+func modifiers(flags jclass.AccessFlags) string {
+	mods := make([]string, 0)
+	switch {
+	case flags.IsPublic():
+		mods = append(mods, "public")
+	case flags.IsProtected():
+		mods = append(mods, "protected")
+	case flags.IsPrivate():
+		mods = append(mods, "private")
+	}
+	if flags.IsStatic() {
+		mods = append(mods, "static")
+	}
+	if flags.IsFinal() {
+		mods = append(mods, "final")
+	}
+	return strings.Join(mods, " ")
 }
-`
 
-var javapTemplate *template.Template
+func declarationKeyword(class *jclass.JavaClass) string {
+	switch {
+	case class.IsInterface():
+		return "interface"
+	case class.IsEnum():
+		return "enum"
+	case class.IsAnnotation():
+		return "@interface"
+	default:
+		return "class"
+	}
+}
 
-func init() {
-	funcs := make(template.FuncMap)
-	funcs["methodPrefix"] = func(flags jclass.AccessFlags) string {
-		mods := make([]string, 0)
-		if flags.IsPublic() {
-			mods = append(mods, "public")
-		} else if flags.IsProtected() {
-			mods = append(mods, "protected")
-		} else if flags.IsPrivate() {
-			mods = append(mods, "private")
-		}
-		if flags.IsStatic() {
-			mods = append(mods, "static")
-		}
-		if flags.IsFinal() {
-			mods = append(mods, "final")
-		}
-		if len(mods) > 0 {
-			return strings.Join(mods, " ") + " "
-		} else {
-			return strings.Join(mods, " ")
-		}
+func writeFormat(w io.Writer, class *jclass.JavaClass) error {
+	fmt.Fprintf(w, "Compiled from \"%s\"\n", class.SourceFile())
+	fmt.Fprintf(w, "%s %s %s", modifiers(class), declarationKeyword(class), class.CanonicalName())
+	if class.SuperClass() != "" {
+		fmt.Fprintf(w, " extends %s", class.SuperClass())
 	}
-	funcs["typeNamePrefix"] = func(class *jclass.JavaClass) string {
-		mods := make([]string, 0)
-		if class.IsPublic() {
-			mods = append(mods, "public")
-		} else if class.IsProtected() {
-			mods = append(mods, "protected")
-		} else if class.IsPrivate() {
-			mods = append(mods, "private")
-		}
-		if class.IsStatic() {
-			mods = append(mods, "static")
-		}
-		if class.IsFinal() {
-			mods = append(mods, "final")
-		}
-		if class.IsInterface() {
-			mods = append(mods, "interface")
-		} else if class.IsEnum() {
-			mods = append(mods, "enum")
-		} else if class.IsAnnotation() {
-			mods = append(mods, "@interface")
-		} else {
-			mods = append(mods, "class")
-		}
-		return strings.Join(mods, " ")
+	if len(class.Interfaces()) > 0 {
+		fmt.Fprintf(w, " implements %s", strings.Join(class.Interfaces(), ", "))
 	}
-	funcs["superclass"] = func(class *jclass.JavaClass) string {
-		if class.SuperClass() == "java.lang.Object" {
-			return ""
-		} else {
-			return " extends " + class.SuperClass()
-		}
+	fmt.Fprint(w, " {\n")
+	for _, field := range class.Fields() {
+		fmt.Fprintf(w, "  %s %s %s;\n", modifiers(field), field.Type(), field.Name())
 	}
-	funcs["superinterfaces"] = func(class *jclass.JavaClass) string {
-		if class.InterfacesCount == 0 {
-			return ""
+	for _, method := range class.Methods() {
+		mod := modifiers(method)
+		fmt.Fprint(w, "  ")
+		if mod != "" {
+			fmt.Fprintf(w, "%s ", mod)
 		}
-		implements := make([]string, 0)
-		for _, interface_ := range class.Interfaces() {
-			implements = append(implements, interface_)
-		}
-		return " implements " + strings.Join(implements, ", ")
+		fmt.Fprintf(w, "%s %s(%s)\n", method.ReturnType(), method.Name(), strings.Join(method.ParameterTypes(), ", "))
 	}
-	funcs["join"] = strings.Join
-	javapTemplate = template.Must(template.New("javap").Funcs(funcs).Parse(javapTemplateText))
+	fmt.Fprint(w, "}\n")
+
+	return nil
 }
 
 func run() int {
@@ -109,9 +86,8 @@ func run() int {
 			continue
 		}
 
-		// TODO: javap compatible output
 		class := jclass.NewJavaClass(cf)
-		if err = javapTemplate.Execute(os.Stdout, class); err != nil {
+		if err = writeFormat(os.Stdout, class); err != nil {
 			fmt.Fprintf(os.Stderr, "Write result error: %s\n", err)
 		}
 	}

@@ -64,3 +64,15 @@ func (self *JavaClass) Methods() []*JavaMethod {
 	}
 	return methods
 }
+
+func (self *JavaClass) SourceFile() string {
+	for _, attr := range self.ClassFile.Attributes {
+		sourceFile, ok := attr.(*jvms.SourceFileAttribute)
+		if !ok {
+			continue
+		}
+		utf8Info := self.ConstantPool[sourceFile.SourceFileIndex].(*jvms.ConstantUtf8Info)
+		return utf8Info.JavaString()
+	}
+	return ""
+}
