@@ -1,5 +1,9 @@
 package jvms
 
+import (
+	"math"
+)
+
 // https://docs.oracle.com/javase/specs/jvms/se8/html/jvms-4.html#jvms-4.1
 // ClassFile {
 //     u4             magic;
@@ -159,6 +163,26 @@ func (self *ConstantIntegerInfo) Info() []uint8 {
 	return u32_u8slice(self.Bytes)
 }
 
+func (self *ConstantIntegerInfo) Boolean() bool {
+	return self.Bytes != 0
+}
+
+func (self *ConstantIntegerInfo) Byte() int8 {
+	return int8(self.Bytes)
+}
+
+func (self *ConstantIntegerInfo) Char() rune {
+	return rune(self.Bytes)
+}
+
+func (self *ConstantIntegerInfo) Short() int16 {
+	return int16(self.Bytes)
+}
+
+func (self *ConstantIntegerInfo) Int() int32 {
+	return int32(self.Bytes)
+}
+
 // CONSTANT_Float_info {
 //     u1 tag;
 //     u4 bytes;
@@ -173,6 +197,10 @@ func (self *ConstantFloatInfo) Tag() uint8 {
 
 func (self *ConstantFloatInfo) Info() []uint8 {
 	return u32_u8slice(self.Bytes)
+}
+
+func (self *ConstantFloatInfo) Float() float32 {
+	return math.Float32frombits(self.Bytes)
 }
 
 // CONSTANT_Long_info {
@@ -196,6 +224,10 @@ func (self *ConstantLongInfo) Info() []uint8 {
 	return info
 }
 
+func (self *ConstantLongInfo) Long() int64 {
+	return int64(uint64(self.HighBytes)<<32 | uint64(self.LowBytes))
+}
+
 // CONSTANT_Double_info {
 //     u1 tag;
 //     u4 high_bytes;
@@ -215,6 +247,10 @@ func (self *ConstantDoubleInfo) Info() []uint8 {
 	info = append(info, u32_u8slice(self.HighBytes)...)
 	info = append(info, u32_u8slice(self.LowBytes)...)
 	return info
+}
+
+func (self *ConstantDoubleInfo) Double() float64 {
+	return math.Float64frombits(uint64(self.HighBytes)<<32 | uint64(self.LowBytes))
 }
 
 // CONSTANT_NameAndType_info {
@@ -367,7 +403,24 @@ type AttributeInfo interface {
 // TODO: AnnotationDefaultAttribute
 // TODO: BootstrapMethodsAttribute
 // TODO: CodeAttribute
-// TODO: ConstantValueAttribute
+
+type ConstantValueAttribute struct {
+	AttributeNameIndex_ uint16
+	AttributeLength_    uint32
+	ConstantvalueIndex  uint16
+}
+
+func (self *ConstantValueAttribute) AttributeNameIndex() uint16 {
+	return self.AttributeNameIndex_
+}
+
+func (self *ConstantValueAttribute) AttributeLength() uint32 {
+	return self.AttributeLength_
+}
+
+func (self *ConstantValueAttribute) Info() []uint8 {
+	return u16_u8slice(self.ConstantvalueIndex)
+}
 
 type DeprecatedAttribute struct {
 	AttributeNameIndex_ uint16

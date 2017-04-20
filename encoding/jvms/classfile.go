@@ -244,6 +244,13 @@ func ParseAttributeInfo(constantPool []jvms.ConstantPoolInfo, r io.Reader) (jvms
 	utf8Info := constantPool[attributeNameIndex].(*jvms.ConstantUtf8Info)
 	var ai jvms.AttributeInfo
 	switch utf8Info.JavaString() {
+	case jvms.Attribute_ConstantValue:
+		cv := &jvms.ConstantValueAttribute{
+			AttributeNameIndex_: attributeNameIndex,
+			AttributeLength_:    attributeLength,
+		}
+		ai = cv
+		err = binary.Read(r, binary.BigEndian, &cv.ConstantvalueIndex)
 	case jvms.Attribute_Deprecated:
 		ai = &jvms.DeprecatedAttribute{
 			AttributeNameIndex_: attributeNameIndex,
