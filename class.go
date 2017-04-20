@@ -1,17 +1,44 @@
 package jclass
 
 import (
+	ejvms "github.com/kamichidu/go-jclass/encoding/jvms"
 	"github.com/kamichidu/go-jclass/jvms"
+	"io"
+	"os"
 	"strings"
 )
 
 type JavaClass struct {
 	*jvms.ClassFile
 	AccessFlags
+
+	fields  map[string]*JavaField
+	methods map[string][]*JavaMethod
 }
 
 func NewJavaClass(classFile *jvms.ClassFile) *JavaClass {
-	return &JavaClass{classFile, AccessFlag(classFile.AccessFlags)}
+	return &JavaClass{
+		ClassFile:   classFile,
+		AccessFlags: AccessFlag(classFile.AccessFlags),
+	}
+}
+
+func NewJavaClassFromReader(r io.Reader) (*JavaClass, error) {
+	cf, err := ejvms.ParseClassFile(r)
+	if err != nil {
+		return nil, err
+	}
+	return NewJavaClass(cf), nil
+}
+
+func NewJavaClassFromFilename(filename string) (*JavaClass, error) {
+	file, err := os.Open(filename)
+	if err != nil {
+		return nil, err
+	}
+	defer file.Close()
+
+	return NewJavaClassFromReader(file)
 }
 
 func (self *JavaClass) CanonicalName() string {
@@ -57,12 +84,42 @@ func (self *JavaClass) Fields() []*JavaField {
 	return fields
 }
 
+func (self *JavaClass) Field(name string) *JavaField {
+	if self.fields == nil {
+		self.fields = make(map[string]*JavaField)
+		for _, field := range self.Fields() {
+			self.fields[field.Name()] = field
+		}
+	}
+
+	if field, found := self.fields[name]; found {
+		return field
+	} else {
+		return nil
+	}
+}
+
 func (self *JavaClass) Methods() []*JavaMethod {
 	methods := make([]*JavaMethod, 0)
 	for _, methodInfo := range self.ClassFile.Methods {
 		methods = append(methods, NewJavaMethod(self.ConstantPool, methodInfo))
 	}
 	return methods
+}
+
+func (self *JavaClass) Method(name string) []*JavaMethod {
+	if self.methods == nil {
+		self.methods = make(map[string][]*JavaMethod)
+		for _, method := range self.Methods() {
+			self.methods[method.Name()] = append(self.methods[method.Name()], method)
+		}
+	}
+
+	if methods, found := self.methods[name]; found {
+		return methods
+	} else {
+		return make([]*JavaMethod, 0)
+	}
 }
 
 func (self *JavaClass) SourceFile() string {
