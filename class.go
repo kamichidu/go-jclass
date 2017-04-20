@@ -8,17 +8,17 @@ import (
 )
 
 type JavaClass struct {
-	*jvms.ClassFile
 	AccessFlags
 
-	fields  map[string]*JavaField
-	methods map[string][]*JavaMethod
+	classFile *jvms.ClassFile
+	fields    map[string]*JavaField
+	methods   map[string][]*JavaMethod
 }
 
 func NewJavaClass(classFile *jvms.ClassFile) *JavaClass {
 	return &JavaClass{
-		ClassFile:   classFile,
 		AccessFlags: AccessFlag(classFile.AccessFlags),
+		classFile:   classFile,
 	}
 }
 
@@ -50,8 +50,8 @@ func (self *JavaClass) CanonicalName() string {
 }
 
 func (self *JavaClass) Name() string {
-	classInfo := self.ConstantPool[self.ThisClass].(*jvms.ConstantClassInfo)
-	utf8Info := self.ConstantPool[classInfo.NameIndex].(*jvms.ConstantUtf8Info)
+	classInfo := self.classFile.ConstantPool[self.classFile.ThisClass].(*jvms.ConstantClassInfo)
+	utf8Info := self.classFile.ConstantPool[classInfo.NameIndex].(*jvms.ConstantUtf8Info)
 	return strings.Replace(utf8Info.JavaString(), "/", ".", -1)
 }
 
@@ -66,27 +66,27 @@ func (self *JavaClass) IsClass() bool {
 
 func (self *JavaClass) Interfaces() []string {
 	interfaceNames := make([]string, 0)
-	for _, interfaceIndex := range self.ClassFile.Interfaces {
-		classInfo := self.ConstantPool[interfaceIndex].(*jvms.ConstantClassInfo)
-		utf8Info := self.ConstantPool[classInfo.NameIndex].(*jvms.ConstantUtf8Info)
+	for _, interfaceIndex := range self.classFile.Interfaces {
+		classInfo := self.classFile.ConstantPool[interfaceIndex].(*jvms.ConstantClassInfo)
+		utf8Info := self.classFile.ConstantPool[classInfo.NameIndex].(*jvms.ConstantUtf8Info)
 		interfaceNames = append(interfaceNames, strings.Replace(utf8Info.JavaString(), "/", ".", -1))
 	}
 	return interfaceNames
 }
 
 func (self *JavaClass) SuperClass() string {
-	classInfo, ok := self.ConstantPool[self.ClassFile.SuperClass].(*jvms.ConstantClassInfo)
+	classInfo, ok := self.classFile.ConstantPool[self.classFile.SuperClass].(*jvms.ConstantClassInfo)
 	if !ok {
 		return ""
 	}
-	utf8Info := self.ConstantPool[classInfo.NameIndex].(*jvms.ConstantUtf8Info)
+	utf8Info := self.classFile.ConstantPool[classInfo.NameIndex].(*jvms.ConstantUtf8Info)
 	return strings.Replace(utf8Info.JavaString(), "/", ".", -1)
 }
 
 func (self *JavaClass) Fields() []*JavaField {
 	fields := make([]*JavaField, 0)
-	for _, fieldInfo := range self.ClassFile.Fields {
-		fields = append(fields, NewJavaField(self.ConstantPool, fieldInfo))
+	for _, fieldInfo := range self.classFile.Fields {
+		fields = append(fields, NewJavaField(self.classFile.ConstantPool, fieldInfo))
 	}
 	return fields
 }
@@ -108,8 +108,8 @@ func (self *JavaClass) Field(name string) *JavaField {
 
 func (self *JavaClass) Methods() []*JavaMethod {
 	methods := make([]*JavaMethod, 0)
-	for _, methodInfo := range self.ClassFile.Methods {
-		methods = append(methods, NewJavaMethod(self.ConstantPool, methodInfo))
+	for _, methodInfo := range self.classFile.Methods {
+		methods = append(methods, NewJavaMethod(self.classFile.ConstantPool, methodInfo))
 	}
 	return methods
 }
@@ -130,13 +130,17 @@ func (self *JavaClass) Method(name string) []*JavaMethod {
 }
 
 func (self *JavaClass) SourceFile() string {
-	for _, attr := range self.ClassFile.Attributes {
+	for _, attr := range self.classFile.Attributes {
 		sourceFile, ok := attr.(*jvms.SourceFileAttribute)
 		if !ok {
 			continue
 		}
-		utf8Info := self.ConstantPool[sourceFile.SourceFileIndex].(*jvms.ConstantUtf8Info)
+		utf8Info := self.classFile.ConstantPool[sourceFile.SourceFileIndex].(*jvms.ConstantUtf8Info)
 		return utf8Info.JavaString()
 	}
 	return ""
+}
+
+func (self *JavaClass) ClassFile() *jvms.ClassFile {
+	return self.classFile
 }
