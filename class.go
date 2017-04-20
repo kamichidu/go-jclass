@@ -41,6 +41,11 @@ func NewJavaClassFromFilename(filename string) (*JavaClass, error) {
 	return NewJavaClassFromReader(file)
 }
 
+func (self *JavaClass) PackageName() string {
+	items := strings.Split(self.CanonicalName(), ".")
+	return strings.Join(items[:len(items)-1], ".")
+}
+
 func (self *JavaClass) CanonicalName() string {
 	classInfo := self.ConstantPool[self.ThisClass].(*jvms.ConstantClassInfo)
 	utf8Info := self.ConstantPool[classInfo.NameIndex].(*jvms.ConstantUtf8Info)
@@ -48,9 +53,13 @@ func (self *JavaClass) CanonicalName() string {
 }
 
 func (self *JavaClass) Name() string {
-	classInfo := self.ConstantPool[self.ThisClass].(*jvms.ConstantClassInfo)
-	utf8Info := self.ConstantPool[classInfo.NameIndex].(*jvms.ConstantUtf8Info)
-	return strings.Replace(utf8Info.JavaString(), "/", ".", -1)
+	// TODO: follow java.lang.Class#getName() specification
+	return self.CanonicalName()
+}
+
+func (self *JavaClass) SimpleName() string {
+	items := strings.Split(self.CanonicalName(), ".")
+	return items[len(items)-1]
 }
 
 func (self *JavaClass) IsClass() bool {
