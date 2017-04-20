@@ -8,7 +8,7 @@ import (
 	"strings"
 
 	"github.com/kamichidu/go-jclass"
-	"github.com/kamichidu/go-jclass/encoding/jvms"
+	"github.com/kamichidu/go-jclass/jvms"
 )
 
 func modifiers(flags jclass.AccessFlags) string {

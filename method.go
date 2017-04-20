@@ -1,7 +1,6 @@
 package jclass
 
 import (
-	ejvms "github.com/kamichidu/go-jclass/encoding/jvms"
 	"github.com/kamichidu/go-jclass/jvms"
 	"strings"
 )
@@ -11,8 +10,8 @@ type JavaMethod struct {
 	AccessFlags
 
 	constantPool      []jvms.ConstantPoolInfo
-	returnTypeInfo    *ejvms.FieldDescriptorInfo
-	parameterTypeInfo []*ejvms.FieldDescriptorInfo
+	returnTypeInfo    *jvms.FieldDescriptorInfo
+	parameterTypeInfo []*jvms.FieldDescriptorInfo
 }
 
 func NewJavaMethod(constantPool []jvms.ConstantPoolInfo, methodInfo *jvms.MethodInfo) *JavaMethod {
@@ -50,11 +49,11 @@ func (self *JavaMethod) parseDescriptor() {
 	utf8Info := self.constantPool[self.DescriptorIndex].(*jvms.ConstantUtf8Info)
 	descriptor := utf8Info.JavaString()
 
-	info, err := ejvms.ParseMethodDescriptor(strings.NewReader(descriptor))
+	info, err := jvms.ParseMethodDescriptor(strings.NewReader(descriptor))
 	if err != nil {
 		// TODO: Error handling
-		self.returnTypeInfo = new(ejvms.FieldDescriptorInfo)
-		self.parameterTypeInfo = make([]*ejvms.FieldDescriptorInfo, 0)
+		self.returnTypeInfo = new(jvms.FieldDescriptorInfo)
+		self.parameterTypeInfo = make([]*jvms.FieldDescriptorInfo, 0)
 		return
 	}
 	self.returnTypeInfo = info.ReturnTypeInfo

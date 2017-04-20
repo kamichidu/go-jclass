@@ -1,6 +1,9 @@
 package jvms
 
 import (
+	"encoding/binary"
+	"fmt"
+	"io"
 	"math"
 )
 
@@ -527,4 +530,299 @@ func u32_u8slice(n uint32) []uint8 {
 	b[2] = uint8((n & 0x0000ff00) >> 8)
 	b[3] = uint8((n & 0x000000ff) >> 0)
 	return b
+}
+
+// Parse functions
+
+func ParseClassFile(r io.Reader) (*ClassFile, error) {
+	var err error
+	cf := new(ClassFile)
+	for _, v := range []interface{}{&cf.Magic, &cf.MinorVersion, &cf.MajorVersion, &cf.ConstantPoolCount} {
+		if err = binary.Read(r, binary.BigEndian, v); err != nil {
+			return nil, err
+		}
+	}
+	if cf.Magic != 0xcafebabe {
+		return nil, fmt.Errorf("Illegal magic binary: %v", cf.Magic)
+	}
+	// Constant pool starts with index 1
+	cf.ConstantPool = make([]ConstantPoolInfo, cf.ConstantPoolCount)
+	for i := uint16(1); i < cf.ConstantPoolCount; i++ {
+		cpInfo, err := ParseConstantPool(r)
+		if err != nil {
+			return nil, err
+		}
+		cf.ConstantPool[i] = cpInfo
+
+		// Some cp_info consumes double indices
+		switch cpInfo.Tag() {
+		case CONSTANT_Long, CONSTANT_Double:
+			i++
+			cf.ConstantPool[i] = cpInfo
+		}
+	}
+	for _, v := range []interface{}{&cf.AccessFlags, &cf.ThisClass, &cf.SuperClass, &cf.InterfacesCount} {
+		if err = binary.Read(r, binary.BigEndian, v); err != nil {
+			return nil, err
+		}
+	}
+	cf.Interfaces = make([]uint16, cf.InterfacesCount)
+	if err = binary.Read(r, binary.BigEndian, &cf.Interfaces); err != nil {
+		return nil, err
+	}
+	if err = binary.Read(r, binary.BigEndian, &cf.FieldsCount); err != nil {
+		return nil, err
+	}
+	cf.Fields = make([]*FieldInfo, cf.FieldsCount)
+	for i := uint16(0); i < cf.FieldsCount; i++ {
+		if cf.Fields[i], err = ParseFieldInfo(cf.ConstantPool, r); err != nil {
+			return nil, err
+		}
+	}
+	if err = binary.Read(r, binary.BigEndian, &cf.MethodsCount); err != nil {
+		return nil, err
+	}
+	cf.Methods = make([]*MethodInfo, cf.MethodsCount)
+	for i := uint16(0); i < cf.MethodsCount; i++ {
+		if cf.Methods[i], err = ParseMethodInfo(cf.ConstantPool, r); err != nil {
+			return nil, err
+		}
+	}
+	if err = binary.Read(r, binary.BigEndian, &cf.AttributesCount); err != nil {
+		return nil, err
+	}
+	cf.Attributes = make([]AttributeInfo, cf.AttributesCount)
+	for i := uint16(0); i < cf.AttributesCount; i++ {
+		if cf.Attributes[i], err = ParseAttributeInfo(cf.ConstantPool, r); err != nil {
+			return nil, err
+		}
+	}
+	return cf, nil
+}
+
+func ParseConstantPool(r io.Reader) (ConstantPoolInfo, error) {
+	var (
+		tag uint8
+		err error
+	)
+	if tag, err = u1(r); err != nil {
+		return nil, err
+	}
+
+	var (
+		cpInfo ConstantPoolInfo
+		data   []interface{}
+	)
+	switch tag {
+	case CONSTANT_Class:
+		info := new(ConstantClassInfo)
+		data = []interface{}{
+			&info.NameIndex,
+		}
+		cpInfo = info
+	case CONSTANT_Fieldref:
+		info := new(ConstantFieldrefInfo)
+		data = []interface{}{
+			&info.ClassIndex,
+			&info.NameAndTypeIndex,
+		}
+		cpInfo = info
+	case CONSTANT_Methodref:
+		info := new(ConstantMethodrefInfo)
+		data = []interface{}{
+			&info.ClassIndex,
+			&info.NameAndTypeIndex,
+		}
+		cpInfo = info
+	case CONSTANT_InterfaceMethodref:
+		info := new(ConstantInterfaceMethodrefInfo)
+		data = []interface{}{
+			&info.ClassIndex,
+			&info.NameAndTypeIndex,
+		}
+		cpInfo = info
+	case CONSTANT_String:
+		info := new(ConstantStringInfo)
+		data = []interface{}{
+			&info.StringIndex,
+		}
+		cpInfo = info
+	case CONSTANT_Integer:
+		info := new(ConstantIntegerInfo)
+		data = []interface{}{
+			&info.Bytes,
+		}
+		cpInfo = info
+	case CONSTANT_Float:
+		info := new(ConstantFloatInfo)
+		data = []interface{}{
+			&info.Bytes,
+		}
+		cpInfo = info
+	case CONSTANT_Long:
+		info := new(ConstantLongInfo)
+		data = []interface{}{
+			&info.HighBytes,
+			&info.LowBytes,
+		}
+		cpInfo = info
+	case CONSTANT_Double:
+		info := new(ConstantDoubleInfo)
+		data = []interface{}{
+			&info.HighBytes,
+			&info.LowBytes,
+		}
+		cpInfo = info
+	case CONSTANT_NameAndType:
+		info := new(ConstantNameAndTypeInfo)
+		data = []interface{}{
+			&info.NameIndex,
+			&info.DescriptorIndex,
+		}
+		cpInfo = info
+	case CONSTANT_MethodHandle:
+		info := new(ConstantMethodHandleInfo)
+		data = []interface{}{
+			&info.ReferenceKind,
+			&info.ReferenceIndex,
+		}
+		cpInfo = info
+	case CONSTANT_MethodType:
+		info := new(ConstantMethodTypeInfo)
+		data = []interface{}{
+			&info.DescriptorIndex,
+		}
+		cpInfo = info
+	case CONSTANT_InvokeDynamic:
+		info := new(ConstantInvokeDynamicInfo)
+		data = []interface{}{
+			&info.BootstrapMethodAttrIndex,
+			&info.NameAndTypeIndex,
+		}
+		cpInfo = info
+	case CONSTANT_Utf8:
+		info := new(ConstantUtf8Info)
+		if info.Length, err = u2(r); err != nil {
+			return nil, err
+		}
+		info.Bytes = make([]uint8, info.Length)
+		if err = binary.Read(r, binary.BigEndian, &info.Bytes); err != nil {
+			return nil, err
+		}
+		return info, nil
+	default:
+		return nil, fmt.Errorf("Read unknown constant pool tag: %d", tag)
+	}
+	for _, v := range data {
+		if err = binary.Read(r, binary.BigEndian, v); err != nil {
+			return nil, err
+		}
+	}
+	return cpInfo, err
+}
+
+func ParseFieldInfo(constantPool []ConstantPoolInfo, r io.Reader) (*FieldInfo, error) {
+	var err error
+	fi := new(FieldInfo)
+	for _, v := range []interface{}{&fi.AccessFlags, &fi.NameIndex, &fi.DescriptorIndex, &fi.AttributesCount} {
+		if err = binary.Read(r, binary.BigEndian, v); err != nil {
+			return nil, err
+		}
+	}
+	fi.Attributes = make([]AttributeInfo, fi.AttributesCount)
+	for i := uint16(0); i < fi.AttributesCount; i++ {
+		if fi.Attributes[i], err = ParseAttributeInfo(constantPool, r); err != nil {
+			return nil, err
+		}
+	}
+	return fi, nil
+}
+
+func ParseMethodInfo(constantPool []ConstantPoolInfo, r io.Reader) (*MethodInfo, error) {
+	var err error
+	mi := new(MethodInfo)
+	for _, v := range []interface{}{&mi.AccessFlags, &mi.NameIndex, &mi.DescriptorIndex, &mi.AttributesCount} {
+		if err = binary.Read(r, binary.BigEndian, v); err != nil {
+			return nil, err
+		}
+	}
+	mi.Attributes = make([]AttributeInfo, mi.AttributesCount)
+	for i := uint16(0); i < mi.AttributesCount; i++ {
+		if mi.Attributes[i], err = ParseAttributeInfo(constantPool, r); err != nil {
+			return nil, err
+		}
+	}
+	return mi, nil
+}
+
+func ParseAttributeInfo(constantPool []ConstantPoolInfo, r io.Reader) (AttributeInfo, error) {
+	var err error
+	var (
+		attributeNameIndex uint16
+		attributeLength    uint32
+	)
+	for _, v := range []interface{}{&attributeNameIndex, &attributeLength} {
+		if err = binary.Read(r, binary.BigEndian, v); err != nil {
+			return nil, err
+		}
+	}
+
+	utf8Info := constantPool[attributeNameIndex].(*ConstantUtf8Info)
+	var ai AttributeInfo
+	switch utf8Info.JavaString() {
+	case Attribute_ConstantValue:
+		cv := &ConstantValueAttribute{
+			AttributeNameIndex_: attributeNameIndex,
+			AttributeLength_:    attributeLength,
+		}
+		ai = cv
+		err = binary.Read(r, binary.BigEndian, &cv.ConstantvalueIndex)
+	case Attribute_Deprecated:
+		ai = &DeprecatedAttribute{
+			AttributeNameIndex_: attributeNameIndex,
+			AttributeLength_:    attributeLength,
+		}
+		err = nil
+	case Attribute_Signature:
+		sig := &SignatureAttribute{
+			AttributeNameIndex_: attributeNameIndex,
+			AttributeLength_:    attributeLength,
+		}
+		ai = sig
+		err = binary.Read(r, binary.BigEndian, &sig.SignatureIndex)
+	case Attribute_SourceFile:
+		sf := &SourceFileAttribute{
+			AttributeNameIndex_: attributeNameIndex,
+			AttributeLength_:    attributeLength,
+		}
+		ai = sf
+		err = binary.Read(r, binary.BigEndian, &sf.SourceFileIndex)
+	default:
+		gai := &GenericAttributeInfo{
+			AttributeNameIndex_: attributeNameIndex,
+			AttributeLength_:    attributeLength,
+			Info_:               make([]uint8, attributeLength),
+		}
+		ai = gai
+		err = binary.Read(r, binary.BigEndian, &gai.Info_)
+	}
+	return ai, err
+}
+
+func u1(r io.Reader) (uint8, error) {
+	var data uint8
+	err := binary.Read(r, binary.BigEndian, &data)
+	return data, err
+}
+
+func u2(r io.Reader) (uint16, error) {
+	var data uint16
+	err := binary.Read(r, binary.BigEndian, &data)
+	return data, err
+}
+
+func u4(r io.Reader) (uint32, error) {
+	var data uint32
+	err := binary.Read(r, binary.BigEndian, &data)
+	return data, err
 }

@@ -2,7 +2,6 @@ package jclass
 
 import (
 	"fmt"
-	ejvms "github.com/kamichidu/go-jclass/encoding/jvms"
 	"github.com/kamichidu/go-jclass/jvms"
 	"strings"
 )
@@ -27,7 +26,7 @@ func (self *JavaField) Type() string {
 	utf8Info := self.constantPool[self.DescriptorIndex].(*jvms.ConstantUtf8Info)
 	descriptor := utf8Info.JavaString()
 
-	info, err := ejvms.ParseFieldDescriptor(strings.NewReader(descriptor))
+	info, err := jvms.ParseFieldDescriptor(strings.NewReader(descriptor))
 	if err != nil {
 		// TODO: Error handling
 		return ""

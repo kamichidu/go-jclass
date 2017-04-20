@@ -1,7 +1,6 @@
 package jclass
 
 import (
-	ejvms "github.com/kamichidu/go-jclass/encoding/jvms"
 	"github.com/kamichidu/go-jclass/jvms"
 	"io"
 	"os"
@@ -24,7 +23,7 @@ func NewJavaClass(classFile *jvms.ClassFile) *JavaClass {
 }
 
 func NewJavaClassFromReader(r io.Reader) (*JavaClass, error) {
-	cf, err := ejvms.ParseClassFile(r)
+	cf, err := jvms.ParseClassFile(r)
 	if err != nil {
 		return nil, err
 	}
