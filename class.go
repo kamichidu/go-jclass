@@ -41,19 +41,18 @@ func NewJavaClassFromFilename(filename string) (*JavaClass, error) {
 }
 
 func (self *JavaClass) PackageName() string {
-	items := strings.Split(self.CanonicalName(), ".")
+	items := strings.Split(self.Name(), ".")
 	return strings.Join(items[:len(items)-1], ".")
 }
 
 func (self *JavaClass) CanonicalName() string {
-	classInfo := self.ConstantPool[self.ThisClass].(*jvms.ConstantClassInfo)
-	utf8Info := self.ConstantPool[classInfo.NameIndex].(*jvms.ConstantUtf8Info)
-	return strings.Replace(utf8Info.JavaString(), "/", ".", -1)
+	return strings.Replace(self.Name(), "$", ".", -1)
 }
 
 func (self *JavaClass) Name() string {
-	// TODO: follow java.lang.Class#getName() specification
-	return self.CanonicalName()
+	classInfo := self.ConstantPool[self.ThisClass].(*jvms.ConstantClassInfo)
+	utf8Info := self.ConstantPool[classInfo.NameIndex].(*jvms.ConstantUtf8Info)
+	return strings.Replace(utf8Info.JavaString(), "/", ".", -1)
 }
 
 func (self *JavaClass) SimpleName() string {

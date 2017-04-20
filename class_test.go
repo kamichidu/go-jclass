@@ -14,6 +14,7 @@ func TestJavaClassNames(t *testing.T) {
 	}{
 		{"./testdata/Constants.class", "", "Constants", "Constants", "Constants"},
 		{"./testdata/String.class", "java.lang", "String", "java.lang.String", "java.lang.String"},
+		{"./testdata/Map$Entry.class", "java.util", "Entry", "java.util.Map.Entry", "java.util.Map$Entry"},
 	}
 	for _, c := range cases {
 		class, err := NewJavaClassFromFilename(c.Filename)
