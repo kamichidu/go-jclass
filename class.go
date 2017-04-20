@@ -86,7 +86,7 @@ func (self *JavaClass) SuperClass() string {
 func (self *JavaClass) Fields() []*JavaField {
 	fields := make([]*JavaField, 0)
 	for _, fieldInfo := range self.classFile.Fields {
-		fields = append(fields, NewJavaField(self.classFile.ConstantPool, fieldInfo))
+		fields = append(fields, newJavaField(self.classFile.ConstantPool, fieldInfo))
 	}
 	return fields
 }
@@ -109,7 +109,7 @@ func (self *JavaClass) Field(name string) *JavaField {
 func (self *JavaClass) Methods() []*JavaMethod {
 	methods := make([]*JavaMethod, 0)
 	for _, methodInfo := range self.classFile.Methods {
-		methods = append(methods, NewJavaMethod(self.classFile.ConstantPool, methodInfo))
+		methods = append(methods, newJavaMethod(self.classFile.ConstantPool, methodInfo))
 	}
 	return methods
 }

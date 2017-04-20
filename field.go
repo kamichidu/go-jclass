@@ -13,7 +13,7 @@ type JavaField struct {
 	fieldInfo    *jvms.FieldInfo
 }
 
-func NewJavaField(constantPool []jvms.ConstantPoolInfo, fieldInfo *jvms.FieldInfo) *JavaField {
+func newJavaField(constantPool []jvms.ConstantPoolInfo, fieldInfo *jvms.FieldInfo) *JavaField {
 	return &JavaField{AccessFlag(fieldInfo.AccessFlags), constantPool, fieldInfo}
 }
 

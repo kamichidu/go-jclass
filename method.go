@@ -14,7 +14,7 @@ type JavaMethod struct {
 	parameterTypeInfo []*jvms.FieldDescriptorInfo
 }
 
-func NewJavaMethod(constantPool []jvms.ConstantPoolInfo, methodInfo *jvms.MethodInfo) *JavaMethod {
+func newJavaMethod(constantPool []jvms.ConstantPoolInfo, methodInfo *jvms.MethodInfo) *JavaMethod {
 	return &JavaMethod{
 		AccessFlags:       AccessFlag(methodInfo.AccessFlags),
 		constantPool:      constantPool,
