@@ -548,7 +548,7 @@ func ParseClassFile(r io.Reader) (*ClassFile, error) {
 	// Constant pool starts with index 1
 	cf.ConstantPool = make([]ConstantPoolInfo, cf.ConstantPoolCount)
 	for i := uint16(1); i < cf.ConstantPoolCount; i++ {
-		cpInfo, err := ParseConstantPool(r)
+		cpInfo, err := parseConstantPool(r)
 		if err != nil {
 			return nil, err
 		}
@@ -575,7 +575,7 @@ func ParseClassFile(r io.Reader) (*ClassFile, error) {
 	}
 	cf.Fields = make([]*FieldInfo, cf.FieldsCount)
 	for i := uint16(0); i < cf.FieldsCount; i++ {
-		if cf.Fields[i], err = ParseFieldInfo(cf.ConstantPool, r); err != nil {
+		if cf.Fields[i], err = parseFieldInfo(cf.ConstantPool, r); err != nil {
 			return nil, err
 		}
 	}
@@ -584,7 +584,7 @@ func ParseClassFile(r io.Reader) (*ClassFile, error) {
 	}
 	cf.Methods = make([]*MethodInfo, cf.MethodsCount)
 	for i := uint16(0); i < cf.MethodsCount; i++ {
-		if cf.Methods[i], err = ParseMethodInfo(cf.ConstantPool, r); err != nil {
+		if cf.Methods[i], err = parseMethodInfo(cf.ConstantPool, r); err != nil {
 			return nil, err
 		}
 	}
@@ -593,14 +593,14 @@ func ParseClassFile(r io.Reader) (*ClassFile, error) {
 	}
 	cf.Attributes = make([]AttributeInfo, cf.AttributesCount)
 	for i := uint16(0); i < cf.AttributesCount; i++ {
-		if cf.Attributes[i], err = ParseAttributeInfo(cf.ConstantPool, r); err != nil {
+		if cf.Attributes[i], err = parseAttributeInfo(cf.ConstantPool, r); err != nil {
 			return nil, err
 		}
 	}
 	return cf, nil
 }
 
-func ParseConstantPool(r io.Reader) (ConstantPoolInfo, error) {
+func parseConstantPool(r io.Reader) (ConstantPoolInfo, error) {
 	var (
 		tag uint8
 		err error
@@ -721,7 +721,7 @@ func ParseConstantPool(r io.Reader) (ConstantPoolInfo, error) {
 	return cpInfo, err
 }
 
-func ParseFieldInfo(constantPool []ConstantPoolInfo, r io.Reader) (*FieldInfo, error) {
+func parseFieldInfo(constantPool []ConstantPoolInfo, r io.Reader) (*FieldInfo, error) {
 	var err error
 	fi := new(FieldInfo)
 	for _, v := range []interface{}{&fi.AccessFlags, &fi.NameIndex, &fi.DescriptorIndex, &fi.AttributesCount} {
@@ -731,14 +731,14 @@ func ParseFieldInfo(constantPool []ConstantPoolInfo, r io.Reader) (*FieldInfo, e
 	}
 	fi.Attributes = make([]AttributeInfo, fi.AttributesCount)
 	for i := uint16(0); i < fi.AttributesCount; i++ {
-		if fi.Attributes[i], err = ParseAttributeInfo(constantPool, r); err != nil {
+		if fi.Attributes[i], err = parseAttributeInfo(constantPool, r); err != nil {
 			return nil, err
 		}
 	}
 	return fi, nil
 }
 
-func ParseMethodInfo(constantPool []ConstantPoolInfo, r io.Reader) (*MethodInfo, error) {
+func parseMethodInfo(constantPool []ConstantPoolInfo, r io.Reader) (*MethodInfo, error) {
 	var err error
 	mi := new(MethodInfo)
 	for _, v := range []interface{}{&mi.AccessFlags, &mi.NameIndex, &mi.DescriptorIndex, &mi.AttributesCount} {
@@ -748,14 +748,14 @@ func ParseMethodInfo(constantPool []ConstantPoolInfo, r io.Reader) (*MethodInfo,
 	}
 	mi.Attributes = make([]AttributeInfo, mi.AttributesCount)
 	for i := uint16(0); i < mi.AttributesCount; i++ {
-		if mi.Attributes[i], err = ParseAttributeInfo(constantPool, r); err != nil {
+		if mi.Attributes[i], err = parseAttributeInfo(constantPool, r); err != nil {
 			return nil, err
 		}
 	}
 	return mi, nil
 }
 
-func ParseAttributeInfo(constantPool []ConstantPoolInfo, r io.Reader) (AttributeInfo, error) {
+func parseAttributeInfo(constantPool []ConstantPoolInfo, r io.Reader) (AttributeInfo, error) {
 	var err error
 	var (
 		attributeNameIndex uint16
