@@ -1,6 +1,8 @@
 package jclass
 
 import (
+	"github.com/kamichidu/go-jclass/jvms"
+	"reflect"
 	"testing"
 )
 
@@ -34,5 +36,81 @@ func TestJavaClassNames(t *testing.T) {
 		if class.Name() != c.Name {
 			t.Errorf("Name %v, wants %v", class.Name(), c.Name)
 		}
+	}
+}
+
+func TestJavaClassConstructors(t *testing.T) {
+	type constructor struct {
+		AccessFlags    uint16
+		ParameterTypes []string
+		// TODO: Throws
+	}
+	cases := []struct {
+		Filename     string
+		Constructors []constructor
+	}{
+		{"./testdata/String.class", []constructor{
+			// public java.lang.String();
+			{jvms.ACC_PUBLIC, []string{}},
+			// public java.lang.String(java.lang.String);
+			{jvms.ACC_PUBLIC, []string{"java.lang.String"}},
+			// public java.lang.String(char[]);
+			{jvms.ACC_PUBLIC, []string{"char[]"}},
+			// public java.lang.String(char[], int, int);
+			{jvms.ACC_PUBLIC, []string{"char[]", "int", "int"}},
+			// public java.lang.String(int[], int, int);
+			{jvms.ACC_PUBLIC, []string{"int[]", "int", "int"}},
+			// public java.lang.String(byte[], int, int, int);
+			{jvms.ACC_PUBLIC, []string{"byte[]", "int", "int", "int"}},
+			// public java.lang.String(byte[], int);
+			{jvms.ACC_PUBLIC, []string{"byte[]", "int"}},
+			// public java.lang.String(byte[], int, int, java.lang.String) throws java.io.UnsupportedEncodingException;
+			{jvms.ACC_PUBLIC, []string{"byte[]", "int", "int", "java.lang.String"}},
+			// public java.lang.String(byte[], int, int, java.nio.charset.Charset);
+			{jvms.ACC_PUBLIC, []string{"byte[]", "int", "int", "java.nio.charset.Charset"}},
+			// public java.lang.String(byte[], java.lang.String) throws java.io.UnsupportedEncodingException;
+			{jvms.ACC_PUBLIC, []string{"byte[]", "java.lang.String"}},
+			// public java.lang.String(byte[], java.nio.charset.Charset);
+			{jvms.ACC_PUBLIC, []string{"byte[]", "java.nio.charset.Charset"}},
+			// public java.lang.String(byte[], int, int);
+			{jvms.ACC_PUBLIC, []string{"byte[]", "int", "int"}},
+			// public java.lang.String(byte[]);
+			{jvms.ACC_PUBLIC, []string{"byte[]"}},
+			// public java.lang.String(java.lang.StringBuffer);
+			{jvms.ACC_PUBLIC, []string{"java.lang.StringBuffer"}},
+			// public java.lang.String(java.lang.StringBuilder);
+			{jvms.ACC_PUBLIC, []string{"java.lang.StringBuilder"}},
+			// 	      java.lang.String(char[], boolean);
+			{0x0, []string{"char[]", "boolean"}},
+		}},
+	}
+	for _, c := range cases {
+		class, err := NewJavaClassFromFilename(c.Filename)
+		if err != nil {
+			t.Fatalf("NewJavaClassFromFilename: %s", err)
+		}
+
+		ctors := class.Constructors()
+		if len(ctors) != len(c.Constructors) {
+			t.Errorf("Length %v, wants %v", len(ctors), len(c.Constructors))
+			continue
+		}
+		for _, ctor := range ctors {
+			found := false
+			for _, other := range c.Constructors {
+				if ctor.methodInfo.AccessFlags != other.AccessFlags {
+					continue
+				}
+				if !reflect.DeepEqual(ctor.ParameterTypes(), other.ParameterTypes) {
+					continue
+				}
+				found = true
+				break
+			}
+			if !found {
+				t.Errorf("Not found constructor: %s %s", ctor.AccessFlags, ctor.ParameterTypes())
+			}
+		}
+
 	}
 }

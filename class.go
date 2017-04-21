@@ -106,6 +106,10 @@ func (self *JavaClass) Field(name string) *JavaField {
 	}
 }
 
+func (self *JavaClass) Constructors() []*JavaMethod {
+	return self.Method("<init>")
+}
+
 func (self *JavaClass) Methods() []*JavaMethod {
 	methods := make([]*JavaMethod, 0)
 	for _, methodInfo := range self.classFile.Methods {
