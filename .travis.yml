@@ -1,0 +1,13 @@
+---
+language: go
+
+go:
+  - 1.8.x
+
+install:
+  - go get -u -v github.com/Masterminds/glide
+  - glide install
+
+gobuild_args: -ldflags "-X mail.appVersion=$(git describe --tags)"
+
+script: go test -v $(glide novender)
