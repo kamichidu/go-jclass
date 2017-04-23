@@ -10,4 +10,4 @@ install:
 
 gobuild_args: -ldflags "-X mail.appVersion=$(git describe --tags)"
 
-script: go test -v $(glide novender)
+script: go test -v $(glide novendor)
