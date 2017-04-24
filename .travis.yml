@@ -7,4 +7,5 @@ go:
 install:
   - make deps
 
-script: make VERBOSE=-v test
+script:
+  - make VERBOSE=-v test
