@@ -188,3 +188,146 @@ func TestJavaClassDeclaredConstructors(t *testing.T) {
 
 	}
 }
+
+func TestJavaClassMethods(t *testing.T) {
+	type method struct {
+		AccessFlags    uint16
+		ReturnType     string
+		Name           string
+		ParameterTypes []string
+		// TODO: Throws
+	}
+	cases := []struct {
+		Filename string
+		Methods  []method
+	}{
+		{"./testdata/Object.class", []method{
+			// public final native java.lang.Class<?> getClass();
+			{jvms.ACC_PUBLIC | jvms.ACC_FINAL | jvms.ACC_NATIVE, "java.lang.Class", "getClass", []string{}},
+			// public native int hashCode();
+			{jvms.ACC_PUBLIC | jvms.ACC_NATIVE, "int", "hashCode", []string{}},
+			// public boolean equals(java.lang.Object);
+			{jvms.ACC_PUBLIC, "boolean", "equals", []string{"java.lang.Object"}},
+			// public java.lang.String toString();
+			{jvms.ACC_PUBLIC, "java.lang.String", "toString", []string{}},
+			// public final native void notify();
+			{jvms.ACC_PUBLIC | jvms.ACC_FINAL | jvms.ACC_NATIVE, "void", "notify", []string{}},
+			// public final native void notifyAll();
+			{jvms.ACC_PUBLIC | jvms.ACC_FINAL | jvms.ACC_NATIVE, "void", "notifyAll", []string{}},
+			// public final native void wait(long) throws java.lang.InterruptedException;
+			{jvms.ACC_PUBLIC | jvms.ACC_FINAL | jvms.ACC_NATIVE, "void", "wait", []string{"long"}},
+			// public final void wait(long, int) throws java.lang.InterruptedException;
+			{jvms.ACC_PUBLIC | jvms.ACC_FINAL, "void", "wait", []string{"long", "int"}},
+			// public final void wait() throws java.lang.InterruptedException;
+			{jvms.ACC_PUBLIC | jvms.ACC_FINAL, "void", "wait", []string{}},
+		}},
+	}
+	for _, c := range cases {
+		class, err := NewJavaClassFromFilename(c.Filename)
+		if err != nil {
+			t.Fatalf("NewJavaClassFromFilename: %s", err)
+		}
+
+		methods := class.Methods()
+		if len(methods) != len(c.Methods) {
+			t.Errorf("Length %v, wants %v", len(methods), len(c.Methods))
+			continue
+		}
+		for _, method := range methods {
+			found := false
+			for _, other := range c.Methods {
+				if method.methodInfo.AccessFlags != other.AccessFlags {
+					continue
+				}
+				if method.ReturnType() != other.ReturnType {
+					continue
+				}
+				if method.Name() != other.Name {
+					continue
+				}
+				if !reflect.DeepEqual(method.ParameterTypes(), other.ParameterTypes) {
+					continue
+				}
+				found = true
+				break
+			}
+			if !found {
+				t.Errorf("Not found method: %s %s %s(%s)", method.AccessFlags, method.ReturnType(), method.Name(), method.ParameterTypes())
+			}
+		}
+	}
+}
+func TestJavaClassDeclaredMethods(t *testing.T) {
+	type method struct {
+		AccessFlags    uint16
+		ReturnType     string
+		Name           string
+		ParameterTypes []string
+		// TODO: Throws
+	}
+	cases := []struct {
+		Filename string
+		Methods  []method
+	}{
+		{"./testdata/Object.class", []method{
+			// private static native void registerNatives();
+			{jvms.ACC_PRIVATE | jvms.ACC_STATIC | jvms.ACC_NATIVE, "void", "registerNatives", []string{}},
+			// public final native java.lang.Class<?> getClass();
+			{jvms.ACC_PUBLIC | jvms.ACC_FINAL | jvms.ACC_NATIVE, "java.lang.Class", "getClass", []string{}},
+			// public native int hashCode();
+			{jvms.ACC_PUBLIC | jvms.ACC_NATIVE, "int", "hashCode", []string{}},
+			// public boolean equals(java.lang.Object);
+			{jvms.ACC_PUBLIC, "boolean", "equals", []string{"java.lang.Object"}},
+			// protected native java.lang.Object clone() throws java.lang.CloneNotSupportedException;
+			{jvms.ACC_PROTECTED | jvms.ACC_NATIVE, "java.lang.Object", "clone", []string{}},
+			// public java.lang.String toString();
+			{jvms.ACC_PUBLIC, "java.lang.String", "toString", []string{}},
+			// public final native void notify();
+			{jvms.ACC_PUBLIC | jvms.ACC_FINAL | jvms.ACC_NATIVE, "void", "notify", []string{}},
+			// public final native void notifyAll();
+			{jvms.ACC_PUBLIC | jvms.ACC_FINAL | jvms.ACC_NATIVE, "void", "notifyAll", []string{}},
+			// public final native void wait(long) throws java.lang.InterruptedException;
+			{jvms.ACC_PUBLIC | jvms.ACC_FINAL | jvms.ACC_NATIVE, "void", "wait", []string{"long"}},
+			// public final void wait(long, int) throws java.lang.InterruptedException;
+			{jvms.ACC_PUBLIC | jvms.ACC_FINAL, "void", "wait", []string{"long", "int"}},
+			// public final void wait() throws java.lang.InterruptedException;
+			{jvms.ACC_PUBLIC | jvms.ACC_FINAL, "void", "wait", []string{}},
+			// protected void finalize() throws java.lang.Throwable;
+			{jvms.ACC_PROTECTED, "void", "finalize", []string{}},
+		}},
+	}
+	for _, c := range cases {
+		class, err := NewJavaClassFromFilename(c.Filename)
+		if err != nil {
+			t.Fatalf("NewJavaClassFromFilename: %s", err)
+		}
+
+		methods := class.DeclaredMethods()
+		if len(methods) != len(c.Methods) {
+			t.Errorf("Length %v, wants %v", len(methods), len(c.Methods))
+			continue
+		}
+		for _, method := range methods {
+			found := false
+			for _, other := range c.Methods {
+				if method.methodInfo.AccessFlags != other.AccessFlags {
+					continue
+				}
+				if method.ReturnType() != other.ReturnType {
+					continue
+				}
+				if method.Name() != other.Name {
+					continue
+				}
+				if !reflect.DeepEqual(method.ParameterTypes(), other.ParameterTypes) {
+					continue
+				}
+				found = true
+				break
+			}
+			if !found {
+				t.Errorf("Not found method: %s %s %s(%s)", method.AccessFlags, method.ReturnType(), method.Name(), method.ParameterTypes())
+			}
+		}
+	}
+}

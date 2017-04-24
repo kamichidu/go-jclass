@@ -10,9 +10,8 @@ import (
 type JavaClass struct {
 	AccessFlags
 
-	classFile       *jvms.ClassFile
-	fields          map[string]*JavaField
-	declaredMethods map[string][]*JavaMethod
+	classFile *jvms.ClassFile
+	fields    map[string]*JavaField
 }
 
 func NewJavaClass(classFile *jvms.ClassFile) *JavaClass {
@@ -107,55 +106,70 @@ func (self *JavaClass) Field(name string) *JavaField {
 }
 
 func (self *JavaClass) Constructors() []*JavaMethod {
-	return self.Method("<init>")
+	return self.filterMethods(func(method *JavaMethod) bool {
+		switch method.Name() {
+		case "<init>":
+			return method.IsPublic()
+		default:
+			return false
+		}
+	})
 }
 
 func (self *JavaClass) DeclaredConstructors() []*JavaMethod {
-	return self.DeclaredMethod("<init>")
+	return self.filterMethods(func(method *JavaMethod) bool {
+		switch method.Name() {
+		case "<init>":
+			return true
+		default:
+			return false
+		}
+	})
 }
 
 func (self *JavaClass) Methods() []*JavaMethod {
-	methods := make([]*JavaMethod, 0)
-	for _, methodInfo := range self.classFile.Methods {
-		method := newJavaMethod(self.classFile.ConstantPool, methodInfo)
-		if method.IsPublic() {
-			methods = append(methods, method)
+	return self.filterMethods(func(method *JavaMethod) bool {
+		switch method.Name() {
+		case "<init>", "<clinit>":
+			return false
+		default:
+			return method.IsPublic()
 		}
-	}
-	return methods
+	})
 }
 
 func (self *JavaClass) DeclaredMethods() []*JavaMethod {
-	methods := make([]*JavaMethod, 0)
-	for _, methodInfo := range self.classFile.Methods {
-		methods = append(methods, newJavaMethod(self.classFile.ConstantPool, methodInfo))
-	}
-	return methods
+	return self.filterMethods(func(method *JavaMethod) bool {
+		switch method.Name() {
+		case "<init>", "<clinit>":
+			return false
+		default:
+			return true
+		}
+	})
 }
 
 func (self *JavaClass) Method(name string) []*JavaMethod {
+	return self.filterMethods(func(method *JavaMethod) bool {
+		return method.IsPublic() && method.Name() == name
+	})
+}
+
+func (self *JavaClass) DeclaredMethod(name string) []*JavaMethod {
+	return self.filterMethods(func(method *JavaMethod) bool {
+		return method.Name() == name
+	})
+}
+
+func (self *JavaClass) filterMethods(filter func(method *JavaMethod) bool) []*JavaMethod {
 	methods := make([]*JavaMethod, 0)
-	for _, method := range self.DeclaredMethod(name) {
-		if method.IsPublic() {
+	for _, methodInfo := range self.classFile.Methods {
+		method := newJavaMethod(self.classFile.ConstantPool, methodInfo)
+		if filter(method) {
 			methods = append(methods, method)
 		}
 	}
 	return methods
-}
-
-func (self *JavaClass) DeclaredMethod(name string) []*JavaMethod {
-	if self.declaredMethods == nil {
-		self.declaredMethods = make(map[string][]*JavaMethod)
-		for _, method := range self.DeclaredMethods() {
-			self.declaredMethods[method.Name()] = append(self.declaredMethods[method.Name()], method)
-		}
-	}
-
-	if methods, found := self.declaredMethods[name]; found {
-		return methods
-	} else {
-		return make([]*JavaMethod, 0)
-	}
 }
 
 func (self *JavaClass) SourceFile() string {
