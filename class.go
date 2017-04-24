@@ -11,7 +11,6 @@ type JavaClass struct {
 	AccessFlags
 
 	classFile *jvms.ClassFile
-	fields    map[string]*JavaField
 }
 
 func NewJavaClass(classFile *jvms.ClassFile) *JavaClass {
@@ -83,26 +82,31 @@ func (self *JavaClass) SuperClass() string {
 }
 
 func (self *JavaClass) Fields() []*JavaField {
-	fields := make([]*JavaField, 0)
-	for _, fieldInfo := range self.classFile.Fields {
-		fields = append(fields, newJavaField(self.classFile.ConstantPool, fieldInfo))
-	}
-	return fields
+	return self.filterFields(func(field *JavaField) bool {
+		return true
+	})
 }
 
 func (self *JavaClass) Field(name string) *JavaField {
-	if self.fields == nil {
-		self.fields = make(map[string]*JavaField)
-		for _, field := range self.Fields() {
-			self.fields[field.Name()] = field
-		}
-	}
-
-	if field, found := self.fields[name]; found {
-		return field
+	fields := self.filterFields(func(field *JavaField) bool {
+		return field.Name() == name
+	})
+	if len(fields) > 0 {
+		return fields[0]
 	} else {
 		return nil
 	}
+}
+
+func (self *JavaClass) filterFields(filter func(field *JavaField) bool) []*JavaField {
+	fields := make([]*JavaField, 0)
+	for _, fieldInfo := range self.classFile.Fields {
+		field := newJavaField(self.classFile.ConstantPool, fieldInfo)
+		if filter(field) {
+			fields = append(fields, field)
+		}
+	}
+	return fields
 }
 
 func (self *JavaClass) Constructors() []*JavaConstructor {
