@@ -10,9 +10,9 @@ import (
 type JavaClass struct {
 	AccessFlags
 
-	classFile *jvms.ClassFile
-	fields    map[string]*JavaField
-	methods   map[string][]*JavaMethod
+	classFile       *jvms.ClassFile
+	fields          map[string]*JavaField
+	declaredMethods map[string][]*JavaMethod
 }
 
 func NewJavaClass(classFile *jvms.ClassFile) *JavaClass {
@@ -107,20 +107,25 @@ func (self *JavaClass) Field(name string) *JavaField {
 }
 
 func (self *JavaClass) Constructors() []*JavaMethod {
-	ctors := make([]*JavaMethod, 0)
-	for _, ctor := range self.Method("<init>") {
-		if ctor.IsPublic() {
-			ctors = append(ctors, ctor)
-		}
-	}
-	return ctors
-}
-
-func (self *JavaClass) DeclaredConstructors() []*JavaMethod {
 	return self.Method("<init>")
 }
 
+func (self *JavaClass) DeclaredConstructors() []*JavaMethod {
+	return self.DeclaredMethod("<init>")
+}
+
 func (self *JavaClass) Methods() []*JavaMethod {
+	methods := make([]*JavaMethod, 0)
+	for _, methodInfo := range self.classFile.Methods {
+		method := newJavaMethod(self.classFile.ConstantPool, methodInfo)
+		if method.IsPublic() {
+			methods = append(methods, method)
+		}
+	}
+	return methods
+}
+
+func (self *JavaClass) DeclaredMethods() []*JavaMethod {
 	methods := make([]*JavaMethod, 0)
 	for _, methodInfo := range self.classFile.Methods {
 		methods = append(methods, newJavaMethod(self.classFile.ConstantPool, methodInfo))
@@ -129,14 +134,24 @@ func (self *JavaClass) Methods() []*JavaMethod {
 }
 
 func (self *JavaClass) Method(name string) []*JavaMethod {
-	if self.methods == nil {
-		self.methods = make(map[string][]*JavaMethod)
-		for _, method := range self.Methods() {
-			self.methods[method.Name()] = append(self.methods[method.Name()], method)
+	methods := make([]*JavaMethod, 0)
+	for _, method := range self.DeclaredMethod(name) {
+		if method.IsPublic() {
+			methods = append(methods, method)
+		}
+	}
+	return methods
+}
+
+func (self *JavaClass) DeclaredMethod(name string) []*JavaMethod {
+	if self.declaredMethods == nil {
+		self.declaredMethods = make(map[string][]*JavaMethod)
+		for _, method := range self.DeclaredMethods() {
+			self.declaredMethods[method.Name()] = append(self.declaredMethods[method.Name()], method)
 		}
 	}
 
-	if methods, found := self.methods[name]; found {
+	if methods, found := self.declaredMethods[name]; found {
 		return methods
 	} else {
 		return make([]*JavaMethod, 0)
