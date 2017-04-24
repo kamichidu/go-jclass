@@ -107,6 +107,16 @@ func (self *JavaClass) Field(name string) *JavaField {
 }
 
 func (self *JavaClass) Constructors() []*JavaMethod {
+	ctors := make([]*JavaMethod, 0)
+	for _, ctor := range self.Method("<init>") {
+		if ctor.IsPublic() {
+			ctors = append(ctors, ctor)
+		}
+	}
+	return ctors
+}
+
+func (self *JavaClass) DeclaredConstructors() []*JavaMethod {
 	return self.Method("<init>")
 }
 
