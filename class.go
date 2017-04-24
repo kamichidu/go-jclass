@@ -83,11 +83,28 @@ func (self *JavaClass) SuperClass() string {
 
 func (self *JavaClass) Fields() []*JavaField {
 	return self.filterFields(func(field *JavaField) bool {
+		return field.IsPublic()
+	})
+}
+
+func (self *JavaClass) DeclaredFields() []*JavaField {
+	return self.filterFields(func(field *JavaField) bool {
 		return true
 	})
 }
 
 func (self *JavaClass) Field(name string) *JavaField {
+	fields := self.filterFields(func(field *JavaField) bool {
+		return field.IsPublic() && field.Name() == name
+	})
+	if len(fields) > 0 {
+		return fields[0]
+	} else {
+		return nil
+	}
+}
+
+func (self *JavaClass) DeclaredField(name string) *JavaField {
 	fields := self.filterFields(func(field *JavaField) bool {
 		return field.Name() == name
 	})

@@ -22,7 +22,7 @@ func TestJavaFieldConstantValue(t *testing.T) {
 	}
 	class, _ := NewJavaClassFromFilename("./testdata/Constants.class")
 	for _, c := range cases {
-		f := class.Field(c.N)
+		f := class.DeclaredField(c.N)
 		if f == nil {
 			t.Errorf("Field not found for %s", c.N)
 			continue
