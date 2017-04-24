@@ -1,9 +1,10 @@
 package jclass
 
 import (
-	"github.com/kamichidu/go-jclass/jvms"
 	"reflect"
 	"testing"
+
+	"github.com/kamichidu/go-jclass/jvms"
 )
 
 func TestJavaClassNames(t *testing.T) {
@@ -96,20 +97,14 @@ func TestJavaClassConstructors(t *testing.T) {
 		for _, ctor := range ctors {
 			found := false
 			for _, other := range c.Constructors {
-				if ctor.methodInfo.AccessFlags != other.AccessFlags {
-					continue
-				}
-				if ctor.Name() != class.CanonicalName() {
-					continue
-				}
-				if !reflect.DeepEqual(ctor.ParameterTypes(), other.ParameterTypes) {
+				if !exactMatchConstructor(class, ctor, other.AccessFlags, other.ParameterTypes) {
 					continue
 				}
 				found = true
 				break
 			}
 			if !found {
-				t.Errorf("Not found constructor: %s %s", ctor.AccessFlags, ctor.ParameterTypes())
+				t.Errorf("Not found constructor: %v %s", ctor.AccessFlags, ctor.ParameterTypes())
 			}
 		}
 
@@ -175,20 +170,14 @@ func TestJavaClassDeclaredConstructors(t *testing.T) {
 		for _, ctor := range ctors {
 			found := false
 			for _, other := range c.Constructors {
-				if ctor.methodInfo.AccessFlags != other.AccessFlags {
-					continue
-				}
-				if ctor.Name() != class.CanonicalName() {
-					continue
-				}
-				if !reflect.DeepEqual(ctor.ParameterTypes(), other.ParameterTypes) {
+				if !exactMatchConstructor(class, ctor, other.AccessFlags, other.ParameterTypes) {
 					continue
 				}
 				found = true
 				break
 			}
 			if !found {
-				t.Errorf("Not found constructor: %s %s", ctor.AccessFlags, ctor.ParameterTypes())
+				t.Errorf("Not found constructor: %v %s", ctor.AccessFlags, ctor.ParameterTypes())
 			}
 		}
 
@@ -242,16 +231,7 @@ func TestJavaClassMethods(t *testing.T) {
 		for _, method := range methods {
 			found := false
 			for _, other := range c.Methods {
-				if method.methodInfo.AccessFlags != other.AccessFlags {
-					continue
-				}
-				if method.ReturnType() != other.ReturnType {
-					continue
-				}
-				if method.Name() != other.Name {
-					continue
-				}
-				if !reflect.DeepEqual(method.ParameterTypes(), other.ParameterTypes) {
+				if !exactMatchMethod(method, other.AccessFlags, other.ReturnType, other.Name, other.ParameterTypes) {
 					continue
 				}
 				found = true
@@ -316,16 +296,7 @@ func TestJavaClassDeclaredMethods(t *testing.T) {
 		for _, method := range methods {
 			found := false
 			for _, other := range c.Methods {
-				if method.methodInfo.AccessFlags != other.AccessFlags {
-					continue
-				}
-				if method.ReturnType() != other.ReturnType {
-					continue
-				}
-				if method.Name() != other.Name {
-					continue
-				}
-				if !reflect.DeepEqual(method.ParameterTypes(), other.ParameterTypes) {
+				if !exactMatchMethod(method, other.AccessFlags, other.ReturnType, other.Name, other.ParameterTypes) {
 					continue
 				}
 				found = true
@@ -336,4 +307,46 @@ func TestJavaClassDeclaredMethods(t *testing.T) {
 			}
 		}
 	}
+}
+
+func exactMatchConstructor(class *JavaClass, ctor *JavaConstructor, flags uint16, parameterTypes []string) bool {
+	if ctor.methodInfo.AccessFlags != flags {
+		return false
+	}
+	if ctor.ReturnType() != "" {
+		return false
+	}
+	if ctor.Name() != class.CanonicalName() {
+		return false
+	}
+	if !reflect.DeepEqual(ctor.ParameterTypes(), parameterTypes) {
+		return false
+	}
+	return true
+}
+
+func exactMatchMethod(m *JavaMethod, flags uint16, returnType string, name string, parameterTypes []string) bool {
+	if m.methodInfo.AccessFlags != flags {
+		return false
+	}
+	if m.ReturnType() != returnType {
+		return false
+	}
+	if m.Name() != name {
+		return false
+	}
+	if !reflect.DeepEqual(m.ParameterTypes(), parameterTypes) {
+		return false
+	}
+	return true
+}
+
+func equalMethod(m *JavaMethod, name string, parameterTypes []string) bool {
+	if m.Name() != name {
+		return false
+	}
+	if !reflect.DeepEqual(m.ParameterTypes(), parameterTypes) {
+		return false
+	}
+	return true
 }
