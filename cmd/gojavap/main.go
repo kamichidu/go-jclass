@@ -6,10 +6,23 @@ import (
 	"io"
 	"os"
 	"strings"
+	"text/template"
 
 	"github.com/kamichidu/go-jclass"
 	"github.com/kamichidu/go-jclass/jvms"
 )
+
+//go:generate go-bindata -ignore \.go$ .
+var javapTemplate = template.New("javap")
+
+func init() {
+	template.Must(javapTemplate.
+		Funcs(map[string]interface{}{
+			"modifiers": modifiers,
+			"typeKind":  typeKind,
+		}).
+		Parse(string(MustAsset("javap.tpl"))))
+}
 
 func modifiers(flags jclass.AccessFlags) string {
 	mods := make([]string, 0)
@@ -26,11 +39,16 @@ func modifiers(flags jclass.AccessFlags) string {
 	}
 	if flags.IsFinal() {
 		mods = append(mods, "final")
+	} else if flags.IsAbstract() {
+		mods = append(mods, "abstract")
+	}
+	if len(mods) > 0 {
+		mods = append(mods, "")
 	}
 	return strings.Join(mods, " ")
 }
 
-func declarationKeyword(class *jclass.JavaClass) string {
+func typeKind(class *jclass.JavaClass) string {
 	switch {
 	case class.IsInterface():
 		return "interface"
@@ -45,7 +63,7 @@ func declarationKeyword(class *jclass.JavaClass) string {
 
 func writeFormat(w io.Writer, class *jclass.JavaClass) error {
 	fmt.Fprintf(w, "Compiled from \"%s\"\n", class.SourceFile())
-	fmt.Fprintf(w, "%s %s %s", modifiers(class), declarationKeyword(class), class.CanonicalName())
+	fmt.Fprintf(w, "%s %s %s", modifiers(class), typeKind(class), class.CanonicalName())
 	if class.SuperClass() != "" {
 		fmt.Fprintf(w, " extends %s", class.SuperClass())
 	}
@@ -87,7 +105,8 @@ func run() int {
 		}
 
 		class := jclass.NewJavaClass(cf)
-		if err = writeFormat(os.Stdout, class); err != nil {
+		// if err = writeFormat(os.Stdout, class); err != nil {
+		if err = javapTemplate.Execute(os.Stdout, class); err != nil {
 			fmt.Fprintf(os.Stderr, "Write result error: %s\n", err)
 		}
 	}
