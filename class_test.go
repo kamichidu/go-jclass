@@ -99,6 +99,9 @@ func TestJavaClassConstructors(t *testing.T) {
 				if ctor.methodInfo.AccessFlags != other.AccessFlags {
 					continue
 				}
+				if ctor.Name() != class.CanonicalName() {
+					continue
+				}
 				if !reflect.DeepEqual(ctor.ParameterTypes(), other.ParameterTypes) {
 					continue
 				}
@@ -173,6 +176,9 @@ func TestJavaClassDeclaredConstructors(t *testing.T) {
 			found := false
 			for _, other := range c.Constructors {
 				if ctor.methodInfo.AccessFlags != other.AccessFlags {
+					continue
+				}
+				if ctor.Name() != class.CanonicalName() {
 					continue
 				}
 				if !reflect.DeepEqual(ctor.ParameterTypes(), other.ParameterTypes) {

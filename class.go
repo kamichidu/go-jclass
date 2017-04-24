@@ -105,8 +105,8 @@ func (self *JavaClass) Field(name string) *JavaField {
 	}
 }
 
-func (self *JavaClass) Constructors() []*JavaMethod {
-	return self.filterMethods(func(method *JavaMethod) bool {
+func (self *JavaClass) Constructors() []*JavaConstructor {
+	methods := self.filterMethods(func(method *JavaMethod) bool {
 		switch method.Name() {
 		case "<init>":
 			return method.IsPublic()
@@ -114,10 +114,15 @@ func (self *JavaClass) Constructors() []*JavaMethod {
 			return false
 		}
 	})
+	ctors := make([]*JavaConstructor, 0)
+	for _, method := range methods {
+		ctors = append(ctors, newJavaConstructor(self, method))
+	}
+	return ctors
 }
 
-func (self *JavaClass) DeclaredConstructors() []*JavaMethod {
-	return self.filterMethods(func(method *JavaMethod) bool {
+func (self *JavaClass) DeclaredConstructors() []*JavaConstructor {
+	methods := self.filterMethods(func(method *JavaMethod) bool {
 		switch method.Name() {
 		case "<init>":
 			return true
@@ -125,6 +130,11 @@ func (self *JavaClass) DeclaredConstructors() []*JavaMethod {
 			return false
 		}
 	})
+	ctors := make([]*JavaConstructor, 0)
+	for _, method := range methods {
+		ctors = append(ctors, newJavaConstructor(self, method))
+	}
+	return ctors
 }
 
 func (self *JavaClass) Methods() []*JavaMethod {
