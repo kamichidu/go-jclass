@@ -1,19 +1,17 @@
-VERBOSE=
-
 .PHONY: gojavap
 gojavap: generate
 	go build ./cmd/gojavap/
 
 .PHONY: test
 test: generate
-	go test ${VERBOSE} $$(glide novendor)
+	go test ${TESTFLAGS} ./...
 
 .PHONY: generate
 generate:
-	go generate $$(glide novendor)
+	go generate ./...
 
 .PHONY: deps
 deps:
 	go get -v github.com/Masterminds/glide
-	go get -v github.com/jteeuwen/go-bindata/...
+	go get -v github.com/mjibson/esc
 	glide install

@@ -12,16 +12,19 @@ import (
 	"github.com/kamichidu/go-jclass/jvms"
 )
 
-//go:generate go-bindata -ignore \.go$ .
+var debug string
+
+//go:generate esc -o bindata.go -ignore \.go$ -private .
 var javapTemplate = template.New("javap")
 
 func init() {
+	useLocal := debug != ""
 	template.Must(javapTemplate.
 		Funcs(map[string]interface{}{
 			"modifiers": modifiers,
 			"typeKind":  typeKind,
 		}).
-		Parse(string(MustAsset("javap.tpl"))))
+		Parse(_escFSMustString(useLocal, "/javap.tpl")))
 }
 
 func modifiers(flags jclass.AccessFlags) string {
